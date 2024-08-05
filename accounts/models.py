@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 
@@ -81,3 +82,14 @@ class EmployeeUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.username
+
+
+class ActiveUser(models.Model):
+    user = models.ForeignKey(EmployeeUser, on_delete=models.CASCADE)
+    last_activity = models.DateTimeField(default=timezone.now)
+
+    objects = models.Manager()
+
+    class Meta:
+        db_table = 'ActiveUser'
+        unique_together = ('user',)

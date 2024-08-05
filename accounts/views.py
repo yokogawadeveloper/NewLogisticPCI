@@ -2,10 +2,15 @@ from rest_framework import status, generics
 from rest_framework import viewsets, permissions
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from django.utils import timezone
 from rest_framework_simplejwt.views import TokenObtainPairView
+from datetime import timedelta
+from .models import ActiveUser
 from .decorators import *
 from .serializers import *
 from master.models import *
+
 
 User = get_user_model()
 
@@ -103,3 +108,11 @@ class SubDepartmentViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(query_set, many=True, context={'request': request})
         serializer_data = serializer.data
         return Response(serializer_data)
+
+
+class ActiveUserCountView(APIView):
+    def get(self, request):
+        now = timezone.now()
+        time_threshold = now - timedelta(minutes=5)
+        active_users_count = ActiveUser.objects.filter(last_activity__gte=time_threshold).count()
+        return Response({'active_users_count': active_users_count})
