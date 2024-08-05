@@ -742,6 +742,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
         data = request.data
         box_details = BoxDetails.objects.filter(box_code=data['box_code']).first()
         count_box_details = BoxDetails.objects.filter(parent_box=data['box_code']).count()
+        box_details_length = BoxDetails.objects.filter(dil_id=box_details.dil_id.dil_id, main_box=True).count()
 
         if not box_details:
             return Response({'error': 'Box not found'}, status=404)
@@ -756,6 +757,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
         net_weight = box_details.net_weight if box_details.net_weight is not None else 0
         gross_weight = box_details.gross_weight if box_details.gross_weight is not None else 0
         box_serial_no = box_details.box_serial_no if box_details.box_serial_no is not None else ''
+        box_no = str(box_details.box_serial_no) + "/" + str(box_details_length)
 
         response_data = [{
             'box_no_manual': box_code,
@@ -763,6 +765,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
             'net_weight': net_weight,
             'gross_weight': gross_weight,
             'box_serial_no': box_serial_no,
+            'box_no': box_no,
             'item_packing': []
         }]
 
@@ -939,7 +942,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                 canvas.setFont("Helvetica", 7)
                 draw_wrapped_string(canvas, inch, y_position - 20, "NT W/T:" + str(datas['net_weight']), 4 * inch)
                 draw_wrapped_string(canvas, inch, y_position - 30, "GR W/T:" + str(datas['gross_weight']), 4 * inch)
-                # draw_wrapped_string(canvas, inch, y_position - 40, "Box No:" + str(datas['box_serial_no']), 4 * inch)
+                draw_wrapped_string(canvas, inch, y_position - 40, "Box No:" + str(datas['box_no']), 4 * inch)
                 canvas.setFont("Helvetica", 8)
                 for item_packing in datas['item_packing']:
                     if y_position < inch:
@@ -1121,8 +1124,9 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                 item_list = []
                 for item in item_serializer_data:
                     if box['box_code'] == item['box_code']:
-                        for inline_item in item['item_packing_inline']:
-                            inline_item['box_no_manual'] = box['box_no_manual']
+                        if box['main_box'] == False:
+                            for item_packing_inline in item['item_packing_inline']:
+                                item_packing_inline['box_no_manual'] = box['box_no_manual']
                         item_list.append(item)
                         new_item_packing_serializer_data.append(item)
                 box_data_entry['item_packing'] = new_item_packing_serializer_data
