@@ -1,7 +1,7 @@
 from rest_framework import permissions, viewsets, status
-from django.db.models import Sum,Count
 from decimal import Decimal
 from rest_framework.response import Response
+from django.db.models import Sum,Count
 from rest_framework.decorators import action
 from django.db import transaction
 from dispatch.serializers import *
@@ -736,16 +736,16 @@ class DeliveryChallanViewSet(viewsets.ModelViewSet):
 
             if truck_list.exists():  # Check if truck_list exists
                 lrn_date = data.get('lrn_date')
-                if lrn_date:
-                    lrn_date = datetime.datetime.strptime(lrn_date, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d")
-                else:
-                    lrn_date = None
+                # if lrn_date:
+                #     lrn_date = datetime.datetime.strptime(lrn_date, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d")
+                # else:
+                #     lrn_date = None
 
                 delivery_challan = DeliveryChallan.objects.create(
                     truck_list=truck_list.first(),
                     e_way_bill_no=data.get('e_way_bill_no'),
                     lrn_no=data.get('lrn_no'),
-                    lrn_date=lrn_date,  # Assign formatted date or None
+                    lrn_date=data.get('lrn_date'),
                     remarks=data.get('remarks'),
                     description_of_goods=data.get('description_of_goods'),
                     mode_of_delivery=data.get('mode_of_delivery'),
@@ -761,10 +761,10 @@ class DeliveryChallanViewSet(viewsets.ModelViewSet):
                     bill_no = dc_inv.get('bill_no')
                     bill_date = dc_inv.get('bill_date')
                     if bill_no:
-                        if bill_date:
-                            bill_date = datetime.datetime.strptime(bill_date, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d")
-                        else:
-                            bill_date = None
+                        # if bill_date:
+                        #     bill_date = datetime.datetime.strptime(bill_date, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d")
+                        # else:
+                        #     bill_date = None
 
                         dispatch = DispatchInstruction.objects.filter(dil_id=dc_inv.get('dil_id'))
                         DCInvoiceDetails.objects.create(
@@ -816,10 +816,10 @@ class DeliveryChallanViewSet(viewsets.ModelViewSet):
                 for dc_inv in dc_invoice_details:
                     bill_no = dc_inv.get('bill_no')
                     bill_date = dc_inv.get('bill_date')
-                    if bill_date:
-                        bill_date = datetime.datetime.strptime(bill_date, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d")
-                    else:
-                        bill_date = None
+                    # if bill_date:
+                    #     bill_date = datetime.datetime.strptime(bill_date, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d")
+                    # else:
+                    #     bill_date = None
                     DCInvoiceDetails.objects.create(
                         delivery_challan=delivery_challan.first(),
                         truck_list=truck_list.first(),
