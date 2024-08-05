@@ -1,0 +1,5 @@
+Django Admin Credentials:
+
+
+username = admin
+pass = Yokogawa@12345

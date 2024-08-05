@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Annexure To Delivery Challan</title>
+    <style>
+        .header {
+            font-family: Cambria;
+            font-size: 19px;
+        }
+
+        .dispatchdata {
+            font-family: Cambria;
+            font-size: 15px;
+        }
+
+        td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <table style="width:100%;">
+        <thead>
+            <tr style="border: none;">
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+            </tr>
+
+            <tr style="border-collapse:collapse; border: 1px solid black">
+                <th colspan="10" style="text-align:center;font-size:16px;border:solid 1px;">
+                    <b class="header">ANNEXURE TO DELIVERY CHALLAN NO:
+                        {% if challanNo == None %} - {% else %} {{ challanNo }} {% endif %} &nbsp;&nbsp;&nbsp; DT:
+                        {% if Today == None %} - {% else %} {{ Today }} {% endif %}</b>
+                </th>
+            </tr>
+
+            <tr style="border-collapse:collapse; border: 1px solid black">
+                <th style='border:solid 1px;'><b class="dispatchdata">SL.NO</b></th>
+                <th style='border:solid 1px;'><b class="dispatchdata">BOM SL.NO</b></th>
+                <th colspan="2" style='border:solid 1px;'><b class="dispatchdata">MODEL</b></th>
+                <th colspan="4" style='border:solid 1px;'><b class="dispatchdata">ITEM DESCRIPTION</b></th>
+                <th style='border:solid 1px;'><b class="dispatchdata">QTY</b></th>
+                <th style='border:solid 1px;'><b class="dispatchdata">UNIT</b></th>
+            </tr>
+        </thead>
+        
+        <tbody>
+            {% for i in item_data %}
+            <tr>
+                <td style='border:solid 1px;'>
+                    <span class="dispatchdata">
+                        {% if forloop.counter == None %} - {% else %} {{ forloop.counter }} {% endif %}
+                    </span>
+                </td>
+                <td style='border:solid 1px;'>
+                    <span class="dispatchdata">
+                        {% if i.sl_no == None %} - {% else %} {{ i.sl_no }} {% endif %}
+                    </span>
+                </td>
+                <td colspan="2" style='border:solid 1px;'>
+                    <span class="dispatchdata">
+                        {% if i.material_no == None %} - {% else %} {{ i.material_no }} {% endif %}
+                    </span>
+                </td>
+                <td colspan="4" style='border:solid 1px;'>
+                    <span class="dispatchdata">
+                        {% if i.material_description == None %} - {% else %} {{ i.material_description }} {% endif %}
+                    </span>
+                </td>
+                <td style='border:solid 1px;'>
+                    <span class="dispatchdata">
+                        {% if i.quantity == None %} - {% else %} {{ i.quantity }} {% endif %}
+                    </span>
+                </td>
+                <td style='border:solid 1px;'>
+                    <span class="dispatchdata">
+                        {% if i.unit_of_measurement == None %} - {% else %} {{ i.unit_of_measurement }} {% endif %}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dispatch Details</title>
+</head>
+
+<body>
+    <table style="width:100%;">
+        <tr>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+        </tr>
+        <tr>
+            <td colspan="7" style="text-align:left;font-size:16px;font-family:Arial;color:blue;"><b>
+                    <p style="line-height:0px">YOKOGAWA INDIA LIMITED</p>
+                </b>
+                <p style="line-height:0px;font-family:Arial;color:blue;font-size:14px;">PLOT NO.96,</p>
+                <p style="line-height:0px;font-family:Arial;color:blue;font-size:14px;">ELECTRONIC CITY COMPLEX,HOSUR
+                    ROAD BANGLORE - 560100.</p>
+                <p style="line-height:0px;font-family:Arial;color:blue;font-size:14px;">TEL NO: 91(080) 41586000.</p>
+                <P style="line-height:0px;font-family:Arial;color:blue;font-size:14px;"> email:
+                    Yil-logistics@yokogawa.com</P>
+            </td>
+
+            <!-- <td colspan="3" style="font-size:15px;text-align:right;"><img src="{{ yokogawa_logo }}" width="130px" height="22px" /></td> -->
+        </tr>
+
+        <tr>
+            <td><br /></td>
+        </tr>
+
+        <tr>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:14px;">Date: {% if today == None %} - {%else %} {{today}} {% endif %}</td>
+            <td colspan="5"><b></b></td>
+        </tr>
+
+        <tr>
+            <td><br /></td>
+        </tr>
+
+        <!-- ship to details  -->
+        <tr>
+            <td colspan="3" style="text-align:left;font-family:Arial;font-size:14px;"><b>TO:</b>
+                {% if dispatch_data.ship_to_party_name == None %}
+                <p style="font-family:Calibri;font-size:15px;"> {{ship_to}}</p>
+                {% endif %}
+
+                {% if dispatch_data.ship_to_party_name != None %}
+                <p style="font-family:Calibri;font-size:12px;">
+                    <span>{% if dispatch_data.ship_to_party_name == None %} - {% else %} {{dispatch_data.ship_to_party_name}} {% endif %}</span><br />
+                    <span>{% if dispatch_data.ship_to_address == None %} - {% else %} {{dispatch_data.ship_to_address}} {% endif %}</span><br />
+                    <span>{% if dispatch_data.ship_to_city == None %} - {% else %} {{dispatch_data.ship_to_city}} {% endif %}</span><br />
+                    <span>{% if dispatch_data.ship_to_postal_code == None %} - {% else %} {{dispatch_data.ship_to_postal_code}} {% endif %}</span><br />
+                    <span>{% if dispatch_data.ship_to_country == None %} - {% else %} {{dispatch_data.ship_to_country}} {% endif %}</span><br />
+                </p>
+                {% endif %}
+            </td>
+
+            <td colspan="4"></td>
+            <td colspan="3" style="text-align:left;font-family:Arial;font-size:14px;"><b>Consignee Address:</b>
+                {% if dispatch_data.ship_to_party_name == None %}
+                <p style="font-family:Calibri;font-size:15px;"> {{ship_to}}</p>
+                {% endif %}
+                
+                {% if dispatch_data.ship_to_party_name != None %}
+                <p style="font-family:Calibri;font-size:12px;">
+                    <span>{% if dispatch_data.ship_to_party_name == None %} - {% else %} {{dispatch_data.ship_to_party_name}} {% endif %}</span><br />
+                    <span>{% if dispatch_data.ship_to_address == None %} - {% else %} {{dispatch_data.ship_to_address}} {% endif %}</span><br />
+                    <span>{% if dispatch_data.ship_to_city == None %} - {% else %} {{dispatch_data.ship_to_city}} {% endif %}</span><br />
+                    <span>{% if dispatch_data.ship_to_postal_code == None %} - {% else %} {{dispatch_data.ship_to_postal_code}} {% endif %}</span><br />
+                    <span>{% if dispatch_data.ship_to_country == None %} - {% else %} {{dispatch_data.ship_to_country}} {% endif %}</span><br />
+                </p>
+                {% endif %}
+            </td>
+            
+        </tr>
+        <!-- end ship to details  -->
+
+        <tr>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td colspan="10" style="text-align:left;padding-bottom:22px;font-family:Arial;font-size:14px;"><b>Kind Attn:
+                </b>{% if other_person_name == None %} - {% else %} {{other_person_name}} {% endif %}</td>
+        </tr>
+
+        <tr>
+            <td colspan="5" style="text-align:left;padding-bottom:18px;font-family:Arial;font-size:14px;"><b>Dear Sir/Madam,:</b></td>
+            <td colspan="5"><b></b></td>
+        </tr>
+
+        <tr>
+            <td colspan="10" style="text-align:left;font-family:Arial;font-size:14px;"><b>
+                    Ref.:S O Number: </b>{% if dispatch_data.so_no == None %} - {% else %} {{dispatch_data.so_no}} {% endif %}
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="10" style="text-align:left;font-family:Arial;font-size:14px;">
+                <b>Sub: </b>
+                Despatch Particular For Po No :{% if dispatch_data.po_no == None %} - {% else %} {{dispatch_data.po_no}} {% endif %}, DATE: {% if dispatch_data.po_date == None %} - {% else %} {{dispatch_data.po_date}} {% endif %}.
+            </td>
+        </tr>
+
+        <tr>
+            <td><br /></td>
+        </tr>
+
+        <tr>
+            <td colspan="10" style="text-align:left;font-family:Arial;font-size:14px;">
+                We have despatched the consignment against above P O Number:-
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:14px;">Details are as follows:-</td>
+            <td colspan="5"></td>
+        </tr>
+
+    </table>
+
+    <table style="width:100%;border-collapse:collapse;">
+        <thead>
+            <tr>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+            </tr>
+    
+            <tr style="border: 1px solid black;">
+                <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>Inv No</th>
+                <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>Inv Date</th>
+                <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>Inv Value(INR)</th>
+                <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>Challan No</th>
+                <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>Challan Value(INR)</th>
+                <th colspan="2" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>LRNo/LR Date</th>
+                <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>TruckNo.<br/TruckType</th>
+                <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>No.Of Packages</th>
+                <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>EWay Bill no</th>
+            </tr>
+        </thead>
+    
+        <tbody>
+            {% for data in dc_invoice_data %}
+            <tr style="border: 1px solid black;">
+                <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.bill_no == None %} - {% else %} {{data.bill_no}} {% endif %}</td>
+                <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.bill_date == None %} - {% else %} {{data.bill_date}} {% endif %}</td>
+                <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.bill_amount == None %} - {% else %} {{data.bill_amount}} {% endif %}</td>
+                <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.challen_no == None %} - {% else %} {{data.challen_no}} {% endif %}</td>
+                <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.truck_amount == None %} - {% else %} {{data.truck_amount}} {% endif %}</td>
+                <td colspan="2" style='text-align: center;border:solid 1px;'>{% if data.lrn_no == None %} - {% else %} {{data.lrn_no}} {% endif %}/{% if data.lrn_date == None %} - {% else %} {{data.lrn_date}} {% endif %}</td>
+                <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.truck_no == None %} - {% else %} {{data.truck_no}} {% endif %}</td>
+                <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.no_of_packages == None %} - {% else %} {{data.no_of_packages}} {% endif %}</td>
+                <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.e_way_bill_no == None %} - {% else %} {{data.e_way_bill_no}} {% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table style="width:100%;">
+        <tr>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+        </tr>
+
+        <tr>
+            <td><br /></td>
+        </tr>
+        <!-- start descriptions  -->
+        <tr>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>DESCRIPTION OF GOODS:</b></td>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
+                <span>{% if descOfGoods == None %} - {% else %} {{descOfGoods}} {% endif %}</span>
+            </td>
+        </tr>
+        
+        <tr>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>TRANSPORTER NAME</b></td>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
+                {% if transporter_name == None %} - {% else %} {{transporter_name}} {% endif %}
+            </td>
+        </tr>
+        
+        <!-- <tr>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>TRANSPORTATION MODE</b></td>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
+                {% if mode_of_transport == None %} - {% else %} {{mode_of_transport}} {% endif %}
+            </td>
+        </tr> -->
+        
+        <tr>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>MODE OF DELIVERY:</b></td>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
+                {% if mode_of_delivery == None %} - {% else %} {{mode_of_delivery}} {% endif %}
+            </td>
+        </tr>
+        
+        <tr>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>FREIGHT MODE:</b></td>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
+                {% if freight_mode == None %} - {% else %} {{freight_mode}} {% endif %}
+            </td>
+        </tr>
+        
+        <tr>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>DESTINATION:</b></td>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
+                {% if destination == None %} - {% else %} {{destination}} {% endif %}
+            </td>
+        </tr>
+        
+        <tr>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>TOTAL CONSIGNMENT VALUE:</b></td>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
+                INR. {% if total_consignee_value == None %} - {% else %} {{total_consignee_value}} {% endif %}
+            </td>
+        </tr>
+        
+        <tr>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>REMARKS:</b></td>
+            <td colspan="5" style="text-align:left;padding-bottom:14px;font-family:Arial;font-size:12px;">
+                {% if consignee_remakes == None %} - {% else %} {{consignee_remakes}} {% endif %}
+            </td>
+        </tr>
+        <!-- end descriptions  -->
+        <tr>
+            <td><br /></td>
+        </tr>
+
+        <tr>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
+                {% if insurance == "BY YIL" %}
+                <p>
+                    Transit insurance is covered from Our end.
+                </p>
+                {% else %}
+                <p>
+                    Transit insurance is covered from By Customer.
+                </p>
+                {% endif %}
+            </td>
+            <td colspan="5"></td>
+        </tr>
+        
+        <tr>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:14px;"><b>Regards....</b></td>
+            <td colspan="5" style="text-align:left;font-size:14px;"></td>
+        </tr>
+        
+        <tr>
+            <td colspan="10" style="text-align:left;font-family:Arial;font-size:14px;">
+                <b>{% if regards == None %} - {% else %} {{regards}} {% endif %}
+                </b>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #000;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            padding: 5px;
+            vertical-align: top;
+            border: none;
+            text-align: left;
+        }
+
+        td span {
+            font-weight: bold;
+            font-size: 20px;
+            text-align: left;
+        }
+
+        .label {
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .tr-border {
+            border-bottom: 1px solid #000;
+        }
+
+        tr:last-child {
+            border-bottom: none;
+        }
+
+        .full-width {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        {% if response_data %}
+        <table>
+            <tr>
+                <th style="width: 10%;"></th>
+                <th style="width: 10%;"></th>
+                <th style="width: 10%;"></th>
+                <th style="width: 10%;"></th>
+                <th style="width: 10%;"></th>
+                <th style="width: 10%;"></th>
+                <th style="width: 10%;"></th>
+                <th style="width: 10%;"></th>
+                <th style="width: 10%;"></th>
+                <th style="width: 10%;"></th>
+            </tr>
+
+            <tr  class="tr-border">
+                <td class="label" colspan="2">Consignee:</td>
+                <td colspan="8" class="full-width">
+                    <span>
+                        {{ response_data.ship_to_party_name }},<br>
+                        {{ response_data.ship_to_address }},<br>
+                        {{ response_data.ship_to_city }},<br>
+                        {{ response_data.ship_to_country }},<br>
+                        {{response_data.ship_to_postal_code }}<br>
+                    </span>
+                </td>
+            </tr>
+
+            <tr class="tr-border">
+                <td class="label" colspan="3">Contact Person:</td>
+                <td colspan="3"><span>{% if response_data.customer_name == None %} - {% else %} {{ response_data.customer_name }} {% endif %}</span></td>
+                <td class="label" colspan="1">No.:</td>
+                <td colspan="3"><span>{% if response_data.customer_number == None %} - {% else %} {{ response_data.customer_number }} {% endif %}</span></td>
+            </tr>
+
+            <tr  class="tr-border">
+                <td class="label" colspan="3">P/O No:</td>
+                <td colspan="3"><span>{% if response_data.po_no == None %} - {% else %} {{ response_data.po_no }} {%endif %}</span></td>
+                <td class="label" colspan="1">Date:</td>
+                <td colspan="3"><span>{% if response_data.po_date == None %} - {% else %} {{ response_data.po_date }} {% endif %}</span></td>
+            </tr>
+
+            <tr  class="tr-border">
+                <td class="label" colspan="3">SO No:</td>
+                <td colspan="3"><span>{% if response_data.so_no == None %} - {% else %} {{ response_data.so_no }} {%endif %}</span></td>
+                <td class="label" colspan="1">DO No:</td>
+                <td colspan="3"><span>{% if response_data.dil_no == None %} - {% else %} {{ response_data.dil_no }} {% endif %}</span>
+                </td>
+            </tr>
+
+            <tr  class="tr-border">
+                <td class="label" colspan="3">Package ID:</td>
+                <td colspan="3"><span>{% if response_data.package_id == None %} - {% else %} {{ response_data.package_id }} {%endif %}</span></td>
+                <td class="label" colspan="1">Bar:</td>
+                <td colspan="3"><span>{% if response_data.barcode == None %} - {% else %} {{ response_data.barcode }} {% endif %}</span>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="label" colspan="3">Size:</td>
+               
+
+                <td class="label" colspan="3">NT WT:</td>
+                
+
+                <td class="label" colspan="3">GR WT:</td>
+                
+            </tr>
+
+            <tr  class="tr-border">
+               
+                <td colspan="3"><span>{% if response_data.box_size == None %} - {% else %} {{ response_data.box_size }} {% endif %}</span></td>
+                
+               
+                <td colspan="3"><span>{% if response_data.net_weight == None %} - {% else %} {{ response_data.net_weight }} {% endif %}</span></td>
+                
+              
+                <td colspan="3"><span>{% if response_data.gr_weight == None %} - {% else %} {{ response_data.gr_weight }} {% endif %}</span></td>
+
+            </tr>
+        </table>
+        {% endif %}
+    </div>
+</body>
+
+</html>
