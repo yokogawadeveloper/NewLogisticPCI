@@ -143,3 +143,9 @@ class GatePassTruckDetailsSerializer(serializers.ModelSerializer):
     #     if depth <= 1:
     #         self.fields.pop('create_by')
     #         self.fields.pop('updated_by')
+
+
+class GatePassApproverDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GatePassApproverDetails
+        fields = '__all__'

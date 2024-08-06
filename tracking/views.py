@@ -1,5 +1,7 @@
 from rest_framework import permissions, viewsets, status
 from decimal import Decimal
+
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Sum, Count
 from django.db.models import Max
@@ -1102,5 +1104,26 @@ class GatePassTruckDetailsViewSet(viewsets.ModelViewSet):
                 gate_pass_info_data['truck_list'] = truck_serializer_data
             serialized_data = gate_pass_info_serializer.data
             return Response(serialized_data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GatePassApproverDetailsViewSet(viewsets.ModelViewSet):
+    queryset = GatePassApproverDetails.objects.all()
+    serializer_class = GatePassApproverDetailsSerializer
+    permission_classes = (IsAuthenticated,)
+
+    @action(methods=['post'], detail=False, url_path='gate_pass_approver_details_by_user')
+    def gate_pass_approver_details_by_user(self, request, *args, **kwargs):
+        try:
+            user = request.user
+            gate_pass_approver_details = GatePassApproverDetails.objects.filter(emp=user)
+            serializer = GatePassApproverDetailsSerializer(gate_pass_approver_details, many=True)
+            print(serializer.data)
+            for data in serializer.data:
+                gate_pass_info = GatePassInfo.objects.filter(id=data['gate_info'])
+                gate_pass_info_serializer = GatePassInfoSerializer(gate_pass_info, many=True)
+                data['gate_pass_info'] = gate_pass_info_serializer.data
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
