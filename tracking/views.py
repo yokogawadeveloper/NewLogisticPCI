@@ -2,6 +2,7 @@ from rest_framework import permissions, viewsets, status
 from decimal import Decimal
 from rest_framework.response import Response
 from django.db.models import Sum, Count
+from django.db.models import Max
 from rest_framework.decorators import action
 from django.db import transaction
 from dispatch.serializers import *
@@ -1030,11 +1031,13 @@ class GatePassTruckDetailsViewSet(viewsets.ModelViewSet):
 
             with transaction.atomic():
                 if data:
+                    last_gate_pass = GatePassInfo.objects.aggregate(Max('gate_pass_no'))
+                    new_gate_pass_no = (last_gate_pass['gate_pass_no__max'] or 0) + 1
                     gate_pass_info = GatePassInfo.objects.create(
                         driver_name=data['driver_name'],
                         transporter_name=data['transporter_name'],
                         checkin_date=datetime.date.today(),
-                        gate_pass_no=random.randint(1000, 9999),
+                        gate_pass_no=new_gate_pass_no,
                         gate_pass_type=data['gate_pass_type'],
                         normal_remarks=data['normal_remarks'],
                         status_no=1,
