@@ -1,7 +1,7 @@
 from rest_framework import permissions, viewsets, status
 from decimal import Decimal
 from rest_framework.response import Response
-from django.db.models import Sum,Count
+from django.db.models import Sum, Count
 from rest_framework.decorators import action
 from django.db import transaction
 from dispatch.serializers import *
@@ -416,7 +416,8 @@ class TruckListViewSet(viewsets.ModelViewSet):
                 data['delivery_challan'] = delivery_challan_serializer.data
 
                 truck_delivery_details = TruckDeliveryDetails.objects.filter(truck_list_id=data['id'])
-                truck_delivery_details_serializer = TruckDeliveryDetailsSerializer(truck_delivery_details.first(),many=True)
+                truck_delivery_details_serializer = TruckDeliveryDetailsSerializer(truck_delivery_details.first(),
+                                                                                   many=True)
 
                 data['truck_delivery_details'] = truck_delivery_details_serializer.data
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -1025,42 +1026,50 @@ class GatePassTruckDetailsViewSet(viewsets.ModelViewSet):
         try:
             data = request.data
             truck_list = data['truck_list']
+            users = User.objects.filter(gate_pass_approve_flag=True)
 
-            if data:
-                gate_pass_info = GatePassInfo.objects.create(
-                    driver_name=data['driver_name'],
-                    transporter_name=data['transporter_name'],
-                    checkin_date=datetime.date.today(),
-                    gate_pass_no=random.randint(1000, 9999),
-                    gate_pass_type=data['gate_pass_type'],
-                    normal_remarks=data['normal_remarks'],
-                    status_no=1,
-                    create_by=request.user,
-                )
-
-                for truck in truck_list:
-                    truck_instance = TruckList.objects.get(id=truck['id'])  # Get the actual truck instance
-                    truck_dil_map = TruckDilMappingDetails.objects.filter(truck_list_id=truck_instance.id)
-                    dil_ids = truck_dil_map.values_list('dil_id', flat=True)
-
-                    GatePassTruckDetails.objects.create(
-                        gate_info=gate_pass_info,
-                        truck_info=truck_instance,
+            with transaction.atomic():
+                if data:
+                    gate_pass_info = GatePassInfo.objects.create(
+                        driver_name=data['driver_name'],
+                        transporter_name=data['transporter_name'],
+                        checkin_date=datetime.date.today(),
+                        gate_pass_no=random.randint(1000, 9999),
+                        gate_pass_type=data['gate_pass_type'],
+                        normal_remarks=data['normal_remarks'],
+                        status_no=1,
                         create_by=request.user,
                     )
-
-                    truck_instance.status = 'Gate Pass Created'
-                    truck_instance.tracking_status = 4
-                    truck_instance.save()
-
-                    DispatchInstruction.objects.filter(dil_id__in=dil_ids).update(
-                        dil_status_no=16,
-                        dil_status='Gate Pass Created',
-                    )
-
-                return Response({'message': 'Gate Pass Truck Details Created!'}, status=status.HTTP_201_CREATED)
-
+                    # create Gate Pass Approver
+                    for user in users:
+                        GatePassApproverDetails.objects.create(
+                            gate_info=gate_pass_info,
+                            emp=user,
+                            approver_status='gate_pass_approver',
+                            status='Pending',
+                            create_by=request.user,
+                        )
+                    # create Truck List
+                    for truck in truck_list:
+                        truck_instance = TruckList.objects.get(id=truck['id'])  # Get the actual truck instance
+                        truck_dil_map = TruckDilMappingDetails.objects.filter(truck_list_id=truck_instance.id)
+                        dil_ids = truck_dil_map.values_list('dil_id', flat=True)
+                        GatePassTruckDetails.objects.create(
+                            gate_info=gate_pass_info,
+                            truck_info=truck_instance,
+                            create_by=request.user,
+                        )
+                        truck_instance.status = 'Gate Pass Created'
+                        truck_instance.tracking_status = 4
+                        truck_instance.save()
+                        # Update DIL
+                        DispatchInstruction.objects.filter(dil_id__in=dil_ids).update(
+                            dil_status_no=16,
+                            dil_status='Gate Pass Created',
+                        )
+                    return Response({'message': 'Gate Pass Truck Details Created!'}, status=status.HTTP_201_CREATED)
         except Exception as e:
+            transaction.rollback()
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['post'], detail=False, url_path='dynamic_filter_gate_pass_truck_details')

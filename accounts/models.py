@@ -70,6 +70,7 @@ class EmployeeUser(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now_add=True)
     is_sub_department_head = models.BooleanField(default=False)
     is_department_head = models.BooleanField(default=False)
+    gate_pass_approve_flag = models.BooleanField(default=False)
 
     objects = EmployeeUserManager()
 
