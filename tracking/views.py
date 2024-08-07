@@ -1006,7 +1006,7 @@ class GatePassInfoViewSet(viewsets.ModelViewSet):
                     status_no=3
                 )
                 GatePassAuthThreads.objects.create(
-                    gate_pass_info=gate_info,
+                    gate_pass_info_id=data['id'],
                     emp=request.user,
                     status='Checkout',
                     remarks=data['checkout_remarks']
