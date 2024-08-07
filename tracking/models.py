@@ -322,11 +322,13 @@ class GatePassInfo(models.Model):
     checkin_date = models.DateField(null=True, blank=True)
     normal_remarks = models.CharField(max_length=300, null=True, blank=True)
     status_no = models.CharField(max_length=100, null=True, blank=True)
-    gate_pass_no = models.CharField(max_length=100, null=True, blank=True)
+    gate_pass_no = models.IntegerField(null=True, blank=True)
     gate_pass_type = models.CharField(max_length=100, null=True, blank=True)
     checkout_date = models.DateField(null=True, blank=True)
     checkout_remarks = models.CharField(max_length=300, null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    approve_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    approved_date = models.DateField(null=True, blank=True)
     # other filed
     create_by = models.ForeignKey(User, related_name='+', null=True, on_delete=models.CASCADE)
     updated_by = models.ForeignKey(User, related_name='+', null=True, on_delete=models.CASCADE)
@@ -359,10 +361,9 @@ class GatePassApproverDetails(models.Model):
     emp = models.ForeignKey(User, related_name='gate_pass_approver_details', on_delete=models.CASCADE)
     approver_status = models.CharField(max_length=100, null=True, blank=True)
     status = models.CharField(max_length=100, null=True, blank=True)
+    remarks = models.CharField(max_length=100, null=True, blank=True)
     status_no = models.IntegerField(null=True, blank=True)
     approver_flag = models.BooleanField(default=False)
-    approve_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    approved_date = models.DateField(null=True, blank=True)
     create_by = models.ForeignKey(User, related_name='+', null=True, on_delete=models.CASCADE)
     updated_by = models.ForeignKey(User, related_name='+', null=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
@@ -373,3 +374,19 @@ class GatePassApproverDetails(models.Model):
     class Meta:
         db_table = 'GatePassApproverDetails'
         unique_together = (('gate_info', 'emp'),)
+
+
+class GatePassAuthThreads(models.Model):
+    gate_pass_info = models.ForeignKey(GatePassInfo, related_name='gate_pass_auth_threads', on_delete=models.CASCADE)
+    emp = models.ForeignKey(User, related_name='gate_pass_auth_threads', on_delete=models.CASCADE)
+    status = models.CharField(max_length=100, null=True, blank=True)
+    remarks = models.CharField(max_length=100, null=True, blank=True)
+    created_by = models.ForeignKey(User, related_name='+', null=True, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_by = models.ForeignKey(User, related_name='+', null=True, on_delete=models.CASCADE)
+    updated_at = models.DateTimeField(auto_now_add=True, null=True)
+
+    objects = models.Manager()
+
+    class Meta:
+        db_table = 'GatePassAuthThreads'
