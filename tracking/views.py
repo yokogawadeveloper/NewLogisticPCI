@@ -1,6 +1,6 @@
 from rest_framework import permissions, viewsets, status
 from decimal import Decimal
-
+from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Sum, Count
@@ -988,7 +988,7 @@ class EWBDetailsViewSet(viewsets.ModelViewSet):
 
 
 class GatePassInfoViewSet(viewsets.ModelViewSet):
-    queryset = GatePassInfo.objects.all()
+    queryset = GatePassInfo.objects.filter(is_active=True)
     serializer_class = GatePassInfoSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -997,7 +997,7 @@ class GatePassInfoViewSet(viewsets.ModelViewSet):
         try:
             data = request.data
             if data:
-                gate_info = GatePassInfo.objects.filter(id=data['id'])
+                gate_info = GatePassInfo.objects.filter(id=data['id'], is_active=True)
                 truck_info_ids = GatePassTruckDetails.objects.filter(gate_info=data['id']).values('truck_info')
                 truck_lists = TruckList.objects.filter(id__in=truck_info_ids)
                 gate_info.update(
@@ -1017,13 +1017,23 @@ class GatePassInfoViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(methods=['post'], detail=False, url_path='delete_gate_info_for_checkout')
+    def delete_gate_info_for_checkout(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            if data:
+                gate_info = GatePassInfo.objects.filter(id=data['id'], is_active=True)
+                gate_info.update(is_active=False)
+                return Response({'message': 'Gate Info is deleted!'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class GatePassTruckDetailsViewSet(viewsets.ModelViewSet):
     queryset = GatePassTruckDetails.objects.all()
     serializer_class = GatePassTruckDetailsSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    @transaction.atomic
     @action(methods=['post'], detail=False, url_path='create_gate_pass_truck_details')
     def create_gate_pass_truck_details(self, request, *args, **kwargs):
         try:
@@ -1081,7 +1091,7 @@ class GatePassTruckDetailsViewSet(viewsets.ModelViewSet):
     def dynamic_filter_gate_pass_truck_details(self, request, *args, **kwargs):
         try:
             data = request.data
-            gate_pass_info = GatePassInfo.objects.filter(**data)
+            gate_pass_info = GatePassInfo.objects.filter(**data, is_active=True)
             gate_pass_info_serializer = GatePassInfoSerializer(gate_pass_info, many=True)
             for gate_pass_info_data in gate_pass_info_serializer.data:
                 gate_pass_info_id = gate_pass_info_data['id']
@@ -1121,9 +1131,27 @@ class GatePassApproverDetailsViewSet(viewsets.ModelViewSet):
             serializer = GatePassApproverDetailsSerializer(gate_pass_approver_details, many=True)
             print(serializer.data)
             for data in serializer.data:
-                gate_pass_info = GatePassInfo.objects.filter(id=data['gate_info'])
+                gate_pass_info = GatePassInfo.objects.filter(id=data['gate_info'], is_active=True)
                 gate_pass_info_serializer = GatePassInfoSerializer(gate_pass_info, many=True)
                 data['gate_pass_info'] = gate_pass_info_serializer.data
             return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['post'], detail=False, url_path='update_gate_pass_approver_details')
+    def update_gate_pass_approver_details(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            gate_pass_id = data['gate_pass_id']
+            remarks = data['remarks']
+            GatePassInfo.objects.filter(id=gate_pass_id, is_active=True).update(normal_remarks=remarks)
+            gate_pass_approver = GatePassApproverDetails.objects.filter(gate_info=gate_pass_id)
+            gate_pass_approver.update(
+                approver_status="Gate Pass Approved",
+                status_no=2,
+                approve_by=request.user,
+                approved_date=timezone.now(),
+            )
+            return Response({'message': 'Update Gate Approver Done!'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
