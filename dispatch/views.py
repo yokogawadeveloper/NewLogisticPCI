@@ -1249,7 +1249,7 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                         allocation.update(status="rejected", approved_date=datetime.now())
 
                     else:
-                        wf_da_status = WorkFlowDaApprovers.objects.filter(emp_id=user_id).values('approver')[0][
+                        wf_da_status = WorkFlowDaApprovers.objects.filter(dil_id_id=data['dil_id'],emp_id=user_id).values('approver')[0][
                             'approver']
                         data['approver'] = wf_da_status
 
