@@ -1187,10 +1187,11 @@ class GatePassApproverDetailsViewSet(viewsets.ModelViewSet):
                 remarks=remarks
             )
             GatePassAuthThreads.objects.create(
-                gate_pass_info=gate_pass_id,
+                gate_pass_info_id=gate_pass_id,
                 emp=request.user,
                 status='Approved',
-                remarks=remarks
+                remarks=remarks,
+                created_by=request.user,
             )
             return Response({'message': 'Update Gate Approver Done!'}, status=status.HTTP_200_OK)
         except Exception as e:
