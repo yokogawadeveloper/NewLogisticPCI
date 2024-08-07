@@ -128,7 +128,7 @@ class GatePassInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = GatePassInfo
         fields = '__all__'
-        # partial = True
+        depth = 1
 
 
 class GatePassTruckDetailsSerializer(serializers.ModelSerializer):
