@@ -1067,7 +1067,6 @@ class GatePassTruckDetailsViewSet(viewsets.ModelViewSet):
                         emp=request.user,
                         status='Created',
                         remarks='Gate Pass Created',
-                        create_by=request.user
                     )
                     # create Gate Pass Approver
                     for user in users:
