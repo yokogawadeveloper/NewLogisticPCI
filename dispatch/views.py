@@ -1232,7 +1232,7 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                     mail_serializer_data['requester'] = requester
                     mail_dil_context = {'data': mail_serializer_data}
                     cc.append(request.user.email)
-                    cc.extend(['YIL.Developer4@yokogawa.com', 'ankul.gautam@yokogawa.com'])
+                    cc.extend(['YIL.Developer4@yokogawa.com'])
                     subject = 'DA Prepared'
                     message = render_to_string("prepare_dil.html", mail_dil_context)
 
