@@ -207,8 +207,8 @@ class CustomerDetails(models.Model):
     address1 = models.CharField(max_length=500, null=True, blank=True)
     address2 = models.CharField(max_length=500, null=True, blank=True)
     address3 = models.CharField(max_length=500, null=True, blank=True)
-    pincode = models.CharField(max_length=6, null=True, blank=True)
-    gst_no = models.CharField(max_length=6, null=True, blank=True)
+    pincode = models.CharField(max_length=100, null=True, blank=True)
+    gst_no = models.CharField(max_length=100, null=True, blank=True)
     country = models.CharField(max_length=100, null=True, blank=True)
     # other fields
     created_by = models.ForeignKey(User, related_name='+', null=True, on_delete=models.CASCADE)

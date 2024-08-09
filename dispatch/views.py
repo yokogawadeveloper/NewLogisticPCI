@@ -23,6 +23,7 @@ import time
 import copy
 import os
 import re
+import math
 
 
 # Create your views here.
@@ -260,8 +261,8 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def convert_price_to_decimal(price_str):
-        # Remove spaces and commas, then convert to Decimal
         cleaned_price = price_str.replace(" ", "").replace(",", "")
+        print(cleaned_price)
         return Decimal(cleaned_price)
 
     def create(self, request, *args, **kwargs):
@@ -395,10 +396,8 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
             df = df.rename(columns=column_mapping)
             required_columns = list(column_mapping.values())
             df = df[required_columns]
+            df['Item Price (Sales)'] = df['Item Price (Sales)'].fillna('0').astype(str)
             df['Item Price (Sales)'] = df['Item Price (Sales)'].apply(self.convert_price_to_decimal)
-            print((df['Item Price (Sales)']).dtypes)
-            # df['Sold-to Region'] = df['Sold-to Region'].fillna('null').astype(str)
-            # df['Ship-to Region'] = df['Ship-to Region'].fillna('null').astype(str)
 
             # Check if all required columns are present
             missing_columns = [col for col in required_columns if col not in df.columns]
@@ -474,7 +473,6 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
                                 address1=row['Sold-to Street'],
                                 address2=row['Sold-to Street4'],
                                 pincode=row['Sold-to Postal Code'],
-
                                 country=row['Sold-to Country'],
                                 created_by=request.user
                             )
