@@ -366,3 +366,125 @@ def tci_express(data, res, request):
         return Response(data={"error": "OOPS !Consignment Number not found"})
     except Exception as e:
         return Response(str(e))
+
+
+def acpl(data,res,request):
+    try:
+        global status
+        vehicle_no = \
+        LogisticTruckDeliveryChallan.objects.filter(trucklist_id_id=data['truck_id'], is_active=True).values('lrn_no')[
+            0]['lrn_no']
+        try:
+            url = "http://www.acplcargo.com/Tracking.aspx?serch=" + vehicle_no
+
+            response = requests.get(url)
+            response = response.text
+            response = response.split('<form')
+            response.pop(1)
+
+            response = response[0].replace("]", "],")
+            response = response[:-1]
+            response = '[' + response + ']'
+
+            response = json.loads(response)
+
+            obj = response
+
+            queryset = LogisticsTruckDeliveryDetails.objects.filter(
+                trucklist_id_id=data['truck_id'])
+
+            record_count = queryset.count()
+
+            LogisticsTruckList.objects.filter(
+                truckListId=data['truck_id']).update(tracking_status=3)
+
+            if record_count != 0:
+                return Response(obj)
+                if record_count < len(obj[1]):
+
+                    if obj[0][0]['Station'] == obj[1][-1]['Memo_Tooffice']:
+
+                        status = "Delivered"
+
+                        date_split = obj[3][0]['pod_date'].split('(')
+                        date_split = date_split[1].split(')')
+                        date_split = int(date_split[0])
+
+                        dt = datetime.fromtimestamp(date_split / 1000)
+
+                        acpl_date = dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+                        LogisticsTruckDeliveryDetails.objects.create(trucklist_id_id=data['truck_id'],
+                                                                     current_datetime=acpl_date,
+                                                                     current_location=obj[1][-1]['Memo_Tooffice'],
+                                                                     current_status=status,
+                                                                     current_latitude=None,
+                                                                     current_longitude=None,
+                                                                     is_active=True,
+                                                                     created_by_id=request.user.id)
+
+                        filter_data = LogisticsDaTruckList.objects.filter(
+                            truckListID_id=data['truck_id']).values_list('daID_id', flat=True)
+                        DispatchAdvice.objects.filter(da_id__in=filter_data).update(
+                            status=status, da_status_number=9)
+                        LogisticsTruckList.objects.filter(
+                            truckListId=data['truck_id']).update(tracking_status=4)
+
+                    else:
+
+                        status = "Transit"
+                        return Response(status)
+
+                        date_split = obj[1][-1]['TDate'].split('(')
+                        date_split = date_split[1].split(')')
+                        date_split = int(date_split[0])
+
+                        dt = datetime.fromtimestamp(date_split / 1000)
+
+                        acpl_date = dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+                        LogisticsTruckDeliveryDetails.objects.create(trucklist_id_id=data['truck_id'],
+                                                                     current_datetime=acpl_date,
+                                                                     current_location=obj[1][-1]['Memo_Tooffice'],
+                                                                     current_status=status,
+                                                                     current_latitude=None,
+                                                                     current_longitude=None,
+                                                                     is_active=True,
+                                                                     created_by_id=request.user.id)
+            if record_count == 0:
+                objs = []
+                status = "Transit"
+                for x in obj[1]:
+                    date_split = x['TDate'].split('(')
+                    date_split = date_split[1].split(')')
+                    date_split = int(date_split[0])
+
+                    dt = datetime.fromtimestamp(date_split / 1000)
+
+                    acpl_date = dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+                    objs.append(
+                        LogisticsTruckDeliveryDetails(
+                            trucklist_id_id=data['truck_id'],
+                            current_datetime=acpl_date,
+                            current_location=x['Memo_Tooffice'],
+                            current_status=status,
+                            current_latitude=None,
+                            current_longitude=None,
+                            is_active=True,
+                            created_by_id=request.user.id
+                        )
+                    )
+
+                LogisticsTruckDeliveryDetails.objects.bulk_create(objs)
+
+            LogisticsTruckList.objects.filter(
+                truckListId=data['truck_id']).update(status=status)
+
+        except Exception as e:
+            return Response(e)
+
+    except IndexError as e:
+        return Response(data={"error": "OOPS !Consignment Number not found"})
+    except Exception as e:
+        return Response(str(e))

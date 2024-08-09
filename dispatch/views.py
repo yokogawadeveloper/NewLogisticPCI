@@ -7,6 +7,7 @@ from collections import defaultdict
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Count, F
+from decimal import Decimal
 from django.db import transaction
 from rest_framework import viewsets
 from datetime import datetime
@@ -220,8 +221,8 @@ class DispatchInstructionViewSet(viewsets.ModelViewSet):
             serializer = DispatchInstructionSerializer(dil)
             # email sending
             subject = 'DA Prepared'
-            recipient_list = ['ankul.gautam@yokogawa.com', 'rohit.raj@yokogawa.com']
-            cc = ['YIL.Developer4@yokogawa.com', 'ankul.gautam@yokogawa.com']
+            recipient_list = ['rohit.raj@yokogawa.com']
+            cc = ['YIL.Developer4@yokogawa.com']
             context = {'data': serializer.data}
             message = render_to_string("prepare_dil.html", context)
             send_email(subject, message, recipient_list, cc)
@@ -256,6 +257,12 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
     queryset = DispatchInstruction.objects.all()
     serializer_class = SAPDispatchInstructionSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    @staticmethod
+    def convert_price_to_decimal(price_str):
+        # Remove spaces and commas, then convert to Decimal
+        cleaned_price = price_str.replace(" ", "").replace(",", "")
+        return Decimal(cleaned_price)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -295,10 +302,12 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
         try:
             delivery_no = request.data['delivery']
             sap_data = SAPDispatchInstruction.objects.filter(delivery=delivery_no).last()
+            serializer = SAPDispatchInstructionSerializer(sap_data)
             reference_doc = sap_data.reference_doc
-            dispatch_po_details = DispatchPODetails.objects.filter(so_no=reference_doc, )
-            response_data = []
+            dispatch_po_details = DispatchPODetails.objects.filter(so_no=reference_doc )
+            response_data = serializer.data  # for if condition not works
             customer_data = []
+            response_data['bill_to'] = ''
             if dispatch_po_details.exists():
                 po_no = dispatch_po_details.values('po_no')[0]['po_no']
                 po_date = dispatch_po_details.values('po_date')[0]['po_date']
@@ -356,7 +365,6 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
                     sap_serializer_data['payment_text'] = result[0].PaymentomText
                     sap_serializer_data['sales_person'] = result[0].SalePerson
                     sap_serializer_data['bill_to'] = cust_code
-                    response_data = sap_serializer_data
 
             if response_data:
                 bill_to = response_data['bill_to']
@@ -387,6 +395,8 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
             df = df.rename(columns=column_mapping)
             required_columns = list(column_mapping.values())
             df = df[required_columns]
+            df['Item Price (Sales)'] = df['Item Price (Sales)'].apply(self.convert_price_to_decimal)
+            print((df['Item Price (Sales)']).dtypes)
             # df['Sold-to Region'] = df['Sold-to Region'].fillna('null').astype(str)
             # df['Ship-to Region'] = df['Ship-to Region'].fillna('null').astype(str)
 
@@ -1249,8 +1259,11 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                         allocation.update(status="rejected", approved_date=datetime.now())
 
                     else:
-                        wf_da_status = WorkFlowDaApprovers.objects.filter(dil_id_id=data['dil_id'],emp_id=user_id).values('approver')[0][
-                            'approver']
+                        wf_da_status = \
+                            WorkFlowDaApprovers.objects.filter(dil_id_id=data['dil_id'], emp_id=user_id).values(
+                                'approver')[
+                                0][
+                                'approver']
                         data['approver'] = wf_da_status
 
                         allocation = DAUserRequestAllocation.objects.filter(dil_id_id=dil_id, emp_id=user_id,
