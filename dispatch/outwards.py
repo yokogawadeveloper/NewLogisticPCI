@@ -123,7 +123,7 @@ class ConnectionDispatchViewSet(viewsets.ModelViewSet):
                 if (item['Serialnumber'] == '' or item['Serialnumber'] is None) and (item['TagNo'] == '' or item['TagNo'] is None):
                     pass
                 else:
-                    InlineItemList.objects.filter(master_item=master_item.first(),serial_no=item['Serialnumber']).delete()
+                    InlineItemList.objects.filter(master_item=master_item.first(),serial_no=item['Serialnumber'],tag_no=item['TagNo']).delete()
                     InlineItemList.objects.create(
                         master_item=master_item.first(),
                         serial_no=item['Serialnumber'],

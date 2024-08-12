@@ -473,8 +473,7 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
                 username = 'sa'
                 password = 'LogDB*$@#032024'
                 # Establish connection
-                connection = pyodbc.connect(
-                    'DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
+                connection = pyodbc.connect('DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
                 connection_cursor = connection.cursor()
                 # Execute query
                 query = 'SELECT TOP 1 PONO, PODate, PaymentomText, PaymentomId, WarrantyPeriod, CustCode, SalePerson FROM WA_SaleOrderMaster WHERE SoNo = ?'
