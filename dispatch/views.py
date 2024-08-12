@@ -23,7 +23,6 @@ import time
 import copy
 import os
 import re
-import math
 
 
 # Create your views here.
@@ -262,7 +261,6 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
     @staticmethod
     def convert_price_to_decimal(price_str):
         cleaned_price = price_str.replace(" ", "").replace(",", "")
-        print(cleaned_price)
         return Decimal(cleaned_price)
 
     def create(self, request, *args, **kwargs):
@@ -283,103 +281,6 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
         instance.is_active = False
         instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(detail=False, methods=['post'], url_path='dil_based_on_delivery')
-    def dil_based_on_delivery(self, request, *args, **kwargs):
-        try:
-            delivery_no = request.data['delivery']
-            dil = SAPDispatchInstruction.objects.filter(delivery=delivery_no).distinct('reference_doc_item').order_by(
-                '-reference_doc_item')
-            # latest_records = SAPDispatchInstruction.objects.filter(delivery=delivery_no).annotate(max_id=Max('id')).filter(id=F('max_id'))
-            if not dil:
-                return Response({'message': 'DIL Not found for this delivery', 'status': status.HTTP_204_NO_CONTENT})
-            serializer = SAPDispatchInstructionSerializer(dil, many=True)
-            return Response(serializer.data[::-1])
-        except Exception as e:
-            return Response({'message': str(e), 'status': status.HTTP_400_BAD_REQUEST})
-
-    @action(detail=False, methods=['post'], url_path='sap_so_details')
-    def sap_so_details(self, request, *args, **kwargs):
-        try:
-            delivery_no = request.data['delivery']
-            sap_data = SAPDispatchInstruction.objects.filter(delivery=delivery_no).last()
-            serializer = SAPDispatchInstructionSerializer(sap_data)
-            reference_doc = sap_data.reference_doc
-            dispatch_po_details = DispatchPODetails.objects.filter(so_no=reference_doc )
-            response_data = serializer.data  # for if condition not works
-            customer_data = []
-            response_data['bill_to'] = ''
-            if dispatch_po_details.exists():
-                po_no = dispatch_po_details.values('po_no')[0]['po_no']
-                po_date = dispatch_po_details.values('po_date')[0]['po_date']
-                sales_person = dispatch_po_details.values('sales_person')[0]['sales_person']
-                bill_to = dispatch_po_details.values('bill_to')[0]['bill_to']
-                payment_id = dispatch_po_details.values('payment_id')[0]['payment_id']
-                payment_text = dispatch_po_details.values('payment_text')[0]['payment_text']
-                serializer = SAPDispatchInstructionSerializer(sap_data)
-                sap_serializer_data = serializer.data
-                sap_serializer_data['so_no'] = sap_data.reference_doc
-                sap_serializer_data['po_no'] = po_no
-                sap_serializer_data['po_date'] = po_date
-                sap_serializer_data['sales_person'] = sales_person
-                sap_serializer_data['bill_to'] = bill_to
-                sap_serializer_data['payment_id'] = payment_id
-                sap_serializer_data['payment_text'] = payment_text
-                response_data = sap_serializer_data
-
-            else:
-                server = '10.29.15.180'
-                database = 'Logisticks'
-                username = 'sa'
-                password = 'LogDB*$@#032024'
-                # Establish connection
-                connection = pyodbc.connect(
-                    'DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
-                connection_cursor = connection.cursor()
-                # Execute query
-                query = 'SELECT TOP 1 PONO, PODate, PaymentomText, PaymentomId, WarrantyPeriod, CustCode, SalePerson FROM WA_SaleOrderMaster WHERE SoNo = ?'
-                connection_cursor.execute(query, (reference_doc,))
-                result = connection_cursor.fetchall()
-
-                if result:
-                    cust_code = result[0].CustCode
-                    if cust_code[0] == '0':
-                        cust_code = cust_code[1:]
-                    DispatchPODetails.objects.create(
-                        so_no=reference_doc,
-                        po_no=result[0].PONO,
-                        po_date=result[0].PODate,
-                        payment_id=result[0].PaymentomId,
-                        payment_text=result[0].PaymentomText,
-                        sales_person=result[0].SalePerson,
-                        bill_to=cust_code,
-                        created_by=request.user,
-                        updated_by=request.user
-                    )
-                    connection_cursor.close()
-                    connection.close()
-                    serializer = SAPDispatchInstructionSerializer(sap_data)
-                    sap_serializer_data = serializer.data
-                    sap_serializer_data['po_no'] = result[0].PONO
-                    sap_serializer_data['po_date'] = result[0].PODate
-                    sap_serializer_data['payment_id'] = result[0].PaymentomId
-                    sap_serializer_data['payment_text'] = result[0].PaymentomText
-                    sap_serializer_data['sales_person'] = result[0].SalePerson
-                    sap_serializer_data['bill_to'] = cust_code
-
-            if response_data:
-                bill_to = response_data['bill_to']
-                try:
-                    customer = CustomerDetails.objects.filter(customer_code=bill_to).latest('id')
-                    customer_serializer = CustomerDetailsSerializer(customer)
-                    customer_data = customer_serializer.data
-                except CustomerDetails.DoesNotExist:
-                    customer_data = {}
-
-            return Response({'main_data': response_data, 'customer_data': customer_data}, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response({'message': str(e), 'status': status.HTTP_400_BAD_REQUEST})
 
     @action(detail=False, methods=['post'], url_path='sap_dil_upload')
     def sap_dil_upload(self, request, *args, **kwargs):
@@ -516,9 +417,107 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
                      'status': status.HTTP_201_CREATED
                      })
             else:
-                return Response(
-                    {'message': f'File is missing the following required columns: {", ".join(missing_columns)}',
-                     'status': status.HTTP_400_BAD_REQUEST})
+                return Response({
+                    'message': f'File is missing the following required columns: {", ".join(missing_columns)}',
+                    'status': status.HTTP_400_BAD_REQUEST
+                })
+        except Exception as e:
+            return Response({'message': str(e), 'status': status.HTTP_400_BAD_REQUEST})
+
+    @action(detail=False, methods=['post'], url_path='dil_based_on_delivery')
+    def dil_based_on_delivery(self, request, *args, **kwargs):
+        try:
+            delivery_no = request.data['delivery']
+            dil = SAPDispatchInstruction.objects.filter(delivery=delivery_no).distinct('reference_doc_item').order_by(
+                '-reference_doc_item')
+            # latest_records = SAPDispatchInstruction.objects.filter(delivery=delivery_no).annotate(max_id=Max('id')).filter(id=F('max_id'))
+            if not dil:
+                return Response({'message': 'DIL Not found for this delivery', 'status': status.HTTP_204_NO_CONTENT})
+            serializer = SAPDispatchInstructionSerializer(dil, many=True)
+            return Response(serializer.data[::-1])
+        except Exception as e:
+            return Response({'message': str(e), 'status': status.HTTP_400_BAD_REQUEST})
+
+    @action(detail=False, methods=['post'], url_path='sap_so_details')
+    def sap_so_details(self, request, *args, **kwargs):
+        try:
+            delivery_no = request.data['delivery']
+            sap_data = SAPDispatchInstruction.objects.filter(delivery=delivery_no).last()
+            serializer = SAPDispatchInstructionSerializer(sap_data)
+            reference_doc = sap_data.reference_doc
+            dispatch_po_details = DispatchPODetails.objects.filter(so_no=reference_doc)
+            response_data = serializer.data  # for if condition not works
+            customer_data = []
+            response_data['bill_to'] = ''
+            if dispatch_po_details.exists():
+                po_no = dispatch_po_details.values('po_no')[0]['po_no']
+                po_date = dispatch_po_details.values('po_date')[0]['po_date']
+                sales_person = dispatch_po_details.values('sales_person')[0]['sales_person']
+                bill_to = dispatch_po_details.values('bill_to')[0]['bill_to']
+                payment_id = dispatch_po_details.values('payment_id')[0]['payment_id']
+                payment_text = dispatch_po_details.values('payment_text')[0]['payment_text']
+                serializer = SAPDispatchInstructionSerializer(sap_data)
+                sap_serializer_data = serializer.data
+                sap_serializer_data['so_no'] = sap_data.reference_doc
+                sap_serializer_data['po_no'] = po_no
+                sap_serializer_data['po_date'] = po_date
+                sap_serializer_data['sales_person'] = sales_person
+                sap_serializer_data['bill_to'] = bill_to
+                sap_serializer_data['payment_id'] = payment_id
+                sap_serializer_data['payment_text'] = payment_text
+                response_data = sap_serializer_data
+
+            else:
+                server = '10.29.15.180'
+                database = 'Logisticks'
+                username = 'sa'
+                password = 'LogDB*$@#032024'
+                # Establish connection
+                connection = pyodbc.connect(
+                    'DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
+                connection_cursor = connection.cursor()
+                # Execute query
+                query = 'SELECT TOP 1 PONO, PODate, PaymentomText, PaymentomId, WarrantyPeriod, CustCode, SalePerson FROM WA_SaleOrderMaster WHERE SoNo = ?'
+                connection_cursor.execute(query, (reference_doc,))
+                result = connection_cursor.fetchall()
+
+                if result:
+                    cust_code = result[0].CustCode
+                    if cust_code[0] == '0':
+                        cust_code = cust_code[1:]
+                    DispatchPODetails.objects.create(
+                        so_no=reference_doc,
+                        po_no=result[0].PONO,
+                        po_date=result[0].PODate,
+                        payment_id=result[0].PaymentomId,
+                        payment_text=result[0].PaymentomText,
+                        sales_person=result[0].SalePerson,
+                        bill_to=cust_code,
+                        created_by=request.user,
+                        updated_by=request.user
+                    )
+                    connection_cursor.close()
+                    connection.close()
+                    serializer = SAPDispatchInstructionSerializer(sap_data)
+                    sap_serializer_data = serializer.data
+                    sap_serializer_data['po_no'] = result[0].PONO
+                    sap_serializer_data['po_date'] = result[0].PODate
+                    sap_serializer_data['payment_id'] = result[0].PaymentomId
+                    sap_serializer_data['payment_text'] = result[0].PaymentomText
+                    sap_serializer_data['sales_person'] = result[0].SalePerson
+                    sap_serializer_data['bill_to'] = cust_code
+
+            if response_data:
+                bill_to = response_data['bill_to']
+                try:
+                    customer = CustomerDetails.objects.filter(customer_code=bill_to).latest('id')
+                    customer_serializer = CustomerDetailsSerializer(customer)
+                    customer_data = customer_serializer.data
+                except CustomerDetails.DoesNotExist:
+                    customer_data = {}
+
+            return Response({'main_data': response_data, 'customer_data': customer_data}, status=status.HTTP_200_OK)
+
         except Exception as e:
             return Response({'message': str(e), 'status': status.HTTP_400_BAD_REQUEST})
 
