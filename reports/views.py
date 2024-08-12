@@ -771,8 +771,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
 
         # Get Box Details
         if count_box_details > 1:
-            filter_data = BoxDetails.objects.filter(parent_box=data['box_code'], main_box=False).values_list('box_code',
-                                                                                                             flat=True)
+            filter_data = BoxDetails.objects.filter(parent_box=data['box_code'], main_box=False).values_list('box_code',flat=True)
         else:
             filter_data = BoxDetails.objects.filter(parent_box=data['box_code']).values_list('box_code', flat=True)
 
@@ -788,11 +787,9 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
         item_serializer_data = item_packing_serializer.data
 
         # Fetch new box details if box_item_flag is true
-        new_box_details = BoxDetails.objects.filter(box_code=data['box_code'], box_item_flag=True).values_list(
-            'box_code', flat=True)
+        new_box_details = BoxDetails.objects.filter(box_code=data['box_code'], box_item_flag=True).values_list('box_code', flat=True)
         new_item_packing_data = ItemPacking.objects.filter(box_code__in=new_box_details)
-        new_item_packing_serializer = ItemPackingSerializer(new_item_packing_data, many=True,
-                                                            context={'request': request})
+        new_item_packing_serializer = ItemPackingSerializer(new_item_packing_data, many=True,context={'request': request})
         new_item_packing_serializer_data = new_item_packing_serializer.data
 
         # Combine item packing data with box details
@@ -807,9 +804,8 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                     new_item_packing_serializer_data.append(item)
             response_data[0]['item_packing'] = new_item_packing_serializer_data
 
-        # Create a buffer to hold the PDF data
         # return Response(response_data)
-        buffer = BytesIO()
+        # Create a buffer to hold the PDF data
         width, height = A4
         x_gap = 10  # Define the gap for x-axis
 
@@ -848,13 +844,14 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
 
         def shipment_header(canvas, y_position):
             canvas.setFont("Helvetica", 7)
-            ship_to = [
-                "THERMAX BABCOCK & WILCOX ENERGY",
-                "PLOT NO. A2,&A3",
-                "KHANDALA INDUSTRIAL AREA,PHSE 1",
-                "MAHARASHTRA,27 Maharashtra",
-                "IN 412802",
-            ]
+
+            ship_to = []
+            ship_to.append(dispatch.ship_to_party_name)
+            ship_to.append(dispatch.ship_to_address)
+            ship_to.append(dispatch.ship_to_city)
+            ship_to.append(dispatch.ship_to_postal_code)
+            ship_to.append(dispatch.ship_to_country)
+
             canvas.setFont("Helvetica-Bold", 9)
             canvas.drawString(inch, y_position + 15, "SHIP TO")
             canvas.setFont("Helvetica", 7)
@@ -863,17 +860,17 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                 text_object.textLine(line)
             canvas.drawText(text_object)
 
-            bill_to = [
-                "THERMAX BABCOCK & WILCOX ENERGY",
-                "PLOT NO. A2,&A3",
-                "KHANDALA INDUSTRIAL AREA,PHSE 1",
-                "MAHARASHTRA,27 Maharashtra",
-                "IN 412802",
-            ]
-            canvas.setFont("Helvetica-Bold", 7)
-            canvas.drawString(4 * inch, y_position + 15, "BILL TO")
+            bill_to = []
+            bill_to.append(dispatch.bill_to_party_name)
+            bill_to.append(dispatch.bill_to_address)
+            bill_to.append(dispatch.bill_to_country)
+            bill_to.append(dispatch.bill_to_postal_code)
+            bill_to.append(dispatch.bill_to_city)
+
+            canvas.setFont("Helvetica-Bold", 9)
+            canvas.drawString(4.5 * inch, y_position + 15, "BILL TO")
             canvas.setFont("Helvetica", 7)
-            text_object = canvas.beginText(4 * inch, y_position)  # Adjusted x position to 3.5 * inch
+            text_object = canvas.beginText(4.5 * inch, y_position)  # Adjusted x position to 3.5 * inch
             for line in bill_to:
                 text_object.textLine(line)
             canvas.drawText(text_object)
@@ -960,9 +957,9 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                     y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position,
                                                      item_packing['item_ref_id'].get('ms_code', ''), 2 * inch)
                     y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position, "Cust PO  SI No: " + (
-                                item_packing['item_ref_id'].get('customer_po_sl_no', '') or ''), 2 * inch)
+                            item_packing['item_ref_id'].get('customer_po_sl_no', '') or ''), 2 * inch)
                     y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position, "Cust Part No: " + (
-                                item_packing['item_ref_id'].get('customer_po_item_code', '') or ''), 2 * inch)
+                            item_packing['item_ref_id'].get('customer_po_item_code', '') or ''), 2 * inch)
                     canvas.drawString(5 * inch + x_gap + 10, y_position + 50,
                                       str(item_packing.get('item_qty', '')) + " ST")
                     canvas.setFont("Helvetica", 8)
@@ -1176,13 +1173,14 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
 
         def shipment_header(canvas, y_position):
             canvas.setFont("Helvetica", 7)
-            ship_to = [
-                "THERMAX BABCOCK & WILCOX ENERGY",
-                "PLOT NO. A2,&A3",
-                "KHANDALA INDUSTRIAL AREA,PHSE 1",
-                "MAHARASHTRA,27 Maharashtra",
-                "IN 412802",
-            ]
+
+            ship_to = []
+            ship_to.append(dispatch.ship_to_party_name)
+            ship_to.append(dispatch.ship_to_address)
+            ship_to.append(dispatch.ship_to_city)
+            ship_to.append(dispatch.ship_to_postal_code)
+            ship_to.append(dispatch.ship_to_country)
+
             canvas.setFont("Helvetica-Bold", 9)
             canvas.drawString(inch, y_position + 15, "SHIP TO")
             canvas.setFont("Helvetica", 7)
@@ -1191,17 +1189,17 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                 text_object.textLine(line)
             canvas.drawText(text_object)
 
-            bill_to = [
-                "THERMAX BABCOCK & WILCOX ENERGY",
-                "PLOT NO. A2,&A3",
-                "KHANDALA INDUSTRIAL AREA,PHSE 1",
-                "MAHARASHTRA,27 Maharashtra",
-                "IN 412802",
-            ]
-            canvas.setFont("Helvetica-Bold", 7)
-            canvas.drawString(4 * inch, y_position + 15, "BILL TO")
+            bill_to = []
+            bill_to.append(dispatch.bill_to_party_name)
+            bill_to.append(dispatch.bill_to_address)
+            bill_to.append(dispatch.bill_to_country)
+            bill_to.append(dispatch.bill_to_postal_code)
+            bill_to.append(dispatch.bill_to_city)
+
+            canvas.setFont("Helvetica-Bold", 9)
+            canvas.drawString(4.5 * inch, y_position + 15, "BILL TO")
             canvas.setFont("Helvetica", 7)
-            text_object = canvas.beginText(4 * inch, y_position)  # Adjusted x position to 3.5 * inch
+            text_object = canvas.beginText(4.5 * inch, y_position)  # Adjusted x position to 3.5 * inch
             for line in bill_to:
                 text_object.textLine(line)
             canvas.drawText(text_object)

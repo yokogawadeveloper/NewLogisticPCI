@@ -90,12 +90,12 @@ class DispatchInstruction(models.Model):
     sold_to_address = models.TextField(null=True, blank=True)
     sold_to_gst = models.CharField(max_length=100, null=True, blank=True)
 
+    bill_to_party_no = models.CharField(max_length=100, null=True, blank=True)
     bill_to_party_name = models.CharField(max_length=100, null=True, blank=True)
+    bill_to_address = models.TextField(null=True, blank=True)
     bill_to_country = models.CharField(max_length=100, null=True, blank=True)
     bill_to_postal_code = models.CharField(max_length=100, null=True, blank=True)
     bill_to_city = models.CharField(max_length=100, null=True, blank=True)
-    bill_to_address = models.TextField(null=True, blank=True)
-    bill_to_party_no = models.CharField(max_length=100, null=True, blank=True)
     bill_to_gst = models.CharField(max_length=100, null=True, blank=True)
 
     payment_term_code = models.CharField(max_length=100, null=True, blank=True)
