@@ -98,8 +98,7 @@ class BoxDetailsFile(models.Model):
 
 class ItemPacking(models.Model):
     item_packing_id = models.AutoField(primary_key=True, unique=True)
-    item_ref_id = models.ForeignKey(MasterItemList, related_name='packing_master_list', null=True,
-                                    on_delete=models.CASCADE)
+    item_ref_id = models.ForeignKey(MasterItemList, related_name='packing_master_list', null=True,on_delete=models.CASCADE)
     item_name = models.CharField(max_length=1000, null=True, blank=True)
     item_qty = models.IntegerField(null=True, blank=True)
     is_parent = models.BooleanField(default=False)

@@ -77,6 +77,12 @@ class ItemPackingInlineSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('created_by', 'updated_by')
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if representation.get('tag_no') is None:
+            representation['tag_no'] = ''
+        return representation
+
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
         return super(ItemPackingInlineSerializer, self).create(validated_data=validated_data)

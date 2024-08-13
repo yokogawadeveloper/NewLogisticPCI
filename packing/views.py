@@ -532,10 +532,10 @@ class ItemPackingViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 data = request.data
                 box_code = data['box_code']
-                main_bax = data['main_box']
+                main_box = data['main_box']
 
                 # Ensure BoxDetails exists
-                if main_bax:
+                if main_box:
                     box_code_list = BoxDetails.objects.filter(parent_box=box_code).values_list('box_code', flat=True)
                     box_detail_dil = BoxDetails.objects.filter(parent_box=box_code).first()  # only for dil
                 else:
@@ -547,8 +547,7 @@ class ItemPackingViewSet(viewsets.ModelViewSet):
                 print(f"box_detail_dil: {box_detail_dil}")
 
                 # Delete related ItemPackingInline records
-                item_packing_ids = ItemPacking.objects.filter(box_code__in=box_code_list).values_list('item_packing_id',
-                                                                                                      flat=True)
+                item_packing_ids = ItemPacking.objects.filter(box_code__in=box_code_list).values_list('item_packing_id',flat=True)
                 item_packing_inline = ItemPackingInline.objects.filter(item_pack_id__in=item_packing_ids)
                 inline_item_list_ids = item_packing_inline.values_list('inline_item_list_id', flat=True)
                 InlineItemList.objects.filter(inline_item_id__in=inline_item_list_ids).update(packed_flag=False)
@@ -577,8 +576,7 @@ class ItemPackingViewSet(viewsets.ModelViewSet):
                     # Debug: Log each master_item_obj
                     print(f"Updating MasterItemList: {master_item_obj}")
 
-                MasterItemList.objects.bulk_update(update_list,
-                                                   ['packed_quantity', 'item_status', 'packing_flag', 'item_status_no'])
+                MasterItemList.objects.bulk_update(update_list,['packed_quantity', 'item_status', 'packing_flag', 'item_status_no'])
                 ItemPacking.objects.filter(item_packing_id__in=item_packing_ids).delete()
                 # Debug: Log bulk_update status
                 print("Bulk update completed")
