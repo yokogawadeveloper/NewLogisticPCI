@@ -88,7 +88,7 @@ class ConnectionDispatchViewSet(viewsets.ModelViewSet):
             username = 'sa'
             password = 'LogDB*$@#032024'
             # Establish connection
-            connection = pyodbc.connect( 'DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
+            connection = pyodbc.connect('DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
             connection_cursor = connection.cursor()
             # Fetch item numbers based on so_no
             item_nos_query = MasterItemList.objects.filter(dil_id=dil_id).values_list('item_no', flat=True)
