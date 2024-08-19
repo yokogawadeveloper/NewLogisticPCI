@@ -510,6 +510,20 @@ class TruckDIlMappingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return TruckLoadingDetails.objects.filter(is_active=True)
 
+    @action(methods=['post'], detail=False, url_path='create_truck_mapping_on_dil')
+    def create_truck_mapping_on_dil(self, request):
+        try:
+            dil_ids = request.data['dil_ids']
+            truck_list_id = request.data['truck_list_id']
+            truck_list = TruckList.objects.get(id=truck_list_id)
+            for dil_id in dil_ids:
+                dispatch = DispatchInstruction.objects.get(dil_id=dil_id)
+                truck_mapping = TruckDilMappingDetails(truck_list_id=truck_list, dil_id=dispatch,created_by=request.user)
+                truck_mapping.save()
+                return Response({'message': 'Truck Mapping Created'}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
     @action(methods=['post'], detail=False, url_path='truck_mapping_based_on_dil')
     def truck_mapping_based_on_dil(self, request):
         try:
@@ -1108,14 +1122,17 @@ class GatePassTruckDetailsViewSet(viewsets.ModelViewSet):
             gate_pass_info_serializer = GatePassInfoSerializer(gate_pass_info, many=True)
             for gate_pass_info_data in gate_pass_info_serializer.data:
                 gate_pass_info_id = gate_pass_info_data['id']
-                truck_ids = GatePassTruckDetails.objects.filter(gate_info=gate_pass_info_id).values_list('truck_info',flat=True)
+                truck_ids = GatePassTruckDetails.objects.filter(gate_info=gate_pass_info_id).values_list('truck_info',
+                                                                                                         flat=True)
                 # Aggregate the sum of the number of boxes for the retrieved truck IDs
-                sum_of_no_of_boxes = TruckList.objects.filter(id__in=truck_ids).aggregate(total_boxes=Sum('no_of_boxes'))['total_boxes']
+                sum_of_no_of_boxes = \
+                    TruckList.objects.filter(id__in=truck_ids).aggregate(total_boxes=Sum('no_of_boxes'))['total_boxes']
                 truck_data = TruckList.objects.filter(id__in=truck_ids)
                 truck_serializer = TruckListSerializer(truck_data, many=True)
                 truck_serializer_data = truck_serializer.data
                 for truck_data in truck_serializer_data:
-                    dispatch_ids = TruckLoadingDetails.objects.filter(truck_list_id=truck_data['id']).values_list('dil_id', flat=True)
+                    dispatch_ids = TruckLoadingDetails.objects.filter(truck_list_id=truck_data['id']).values_list(
+                        'dil_id', flat=True)
                     dispatch = DispatchInstruction.objects.filter(dil_id__in=dispatch_ids).distinct()
                     dispatch_serializer = DispatchInstructionSerializer(dispatch, many=True)
 
@@ -1141,20 +1158,24 @@ class GatePassApproverDetailsViewSet(viewsets.ModelViewSet):
     def gate_pass_approver_details_by_user(self, request, *args, **kwargs):
         try:
             user = request.user
-            gate_info_ids = GatePassApproverDetails.objects.filter(emp=user, approver_flag=False).values_list('gate_info', flat=True)
+            gate_info_ids = GatePassApproverDetails.objects.filter(emp=user, approver_flag=False).values_list(
+                'gate_info', flat=True)
             gate_pass_info = GatePassInfo.objects.filter(id__in=gate_info_ids, is_active=True)
             gate_pass_info_serializer = GatePassInfoSerializer(gate_pass_info, many=True)
             for gate_pass_info_data in gate_pass_info_serializer.data:
                 gate_pass_info_id = gate_pass_info_data['id']
-                truck_ids = GatePassTruckDetails.objects.filter(gate_info=gate_pass_info_id).values_list('truck_info', flat=True)
+                truck_ids = GatePassTruckDetails.objects.filter(gate_info=gate_pass_info_id).values_list('truck_info',
+                                                                                                         flat=True)
                 # Aggregate the sum of the number of boxes for the retrieved truck IDs
-                sum_of_no_of_boxes = TruckList.objects.filter(id__in=truck_ids).aggregate(total_boxes=Sum('no_of_boxes'))['total_boxes']
+                sum_of_no_of_boxes = \
+                    TruckList.objects.filter(id__in=truck_ids).aggregate(total_boxes=Sum('no_of_boxes'))['total_boxes']
 
                 truck_data = TruckList.objects.filter(id__in=truck_ids)
                 truck_serializer = TruckListSerializer(truck_data, many=True)
                 truck_serializer_data = truck_serializer.data
                 for truck_data in truck_serializer_data:
-                    dispatch_ids = TruckLoadingDetails.objects.filter(truck_list_id=truck_data['id']).values_list('dil_id', flat=True)
+                    dispatch_ids = TruckLoadingDetails.objects.filter(truck_list_id=truck_data['id']).values_list(
+                        'dil_id', flat=True)
                     dispatch = DispatchInstruction.objects.filter(dil_id__in=dispatch_ids).distinct()
                     dispatch_serializer = DispatchInstructionSerializer(dispatch, many=True)
 
@@ -1177,7 +1198,7 @@ class GatePassApproverDetailsViewSet(viewsets.ModelViewSet):
             gate_pass_id = data['gate_pass_id']
             remarks = data['remarks']
             gate_pass_info = GatePassInfo.objects.filter(id=gate_pass_id, is_active=True)
-            gate_pass_info.update(status_no=2,approve_by=request.user,approved_date=timezone.now())
+            gate_pass_info.update(status_no=2, approve_by=request.user, approved_date=timezone.now())
             gate_pass_approver = GatePassApproverDetails.objects.filter(gate_info=gate_pass_id)
             gate_pass_approver.update(
                 approver_status="Gate Pass Approved",

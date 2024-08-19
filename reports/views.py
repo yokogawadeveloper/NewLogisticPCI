@@ -788,9 +788,11 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
         item_serializer_data = item_packing_serializer.data
 
         # Fetch new box details if box_item_flag is true
-        new_box_details = BoxDetails.objects.filter(box_code=data['box_code'], box_item_flag=True).values_list('box_code', flat=True)
+        new_box_details = BoxDetails.objects.filter(box_code=data['box_code'], box_item_flag=True).values_list(
+            'box_code', flat=True)
         new_item_packing_data = ItemPacking.objects.filter(box_code__in=new_box_details)
-        new_item_packing_serializer = ItemPackingSerializer(new_item_packing_data, many=True,context={'request': request})
+        new_item_packing_serializer = ItemPackingSerializer(new_item_packing_data, many=True,
+                                                            context={'request': request})
         new_item_packing_serializer_data = new_item_packing_serializer.data
 
         # Combine item packing data with box details
@@ -1589,7 +1591,10 @@ class CustomerDocumentsDetailsViewSet(viewsets.ModelViewSet):
                 'barcode': box_details.box_code,
                 'net_weight': box_details.net_weight,
                 'gr_weight': box_details.qa_wetness,
-                'box_size': box.box_size
+                'box_size': box.box_size,
+                'box_height': int(box_details.height if box_details.height is not None else 0),
+                'box_length': int(box_details.length if box_details.length is not None else 0),
+                'box_breadth': int(box_details.breadth if box_details.breadth is not None else 0)
             }
             html_template = get_template('customer_detail.html')
             html = html_template.render({'response_data': response_data})

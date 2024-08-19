@@ -129,8 +129,16 @@
             <td>
                 <table class="sub-section">
                     <tr>
-                        <td class="label no-right-border">COMP NO:</td>
-                        <td class="value no-left-border">STN-0618-A</td>
+                        <td class="label no-right-border">DO No:</td>
+                        <td class="value no-left-border"><span>{% if response_data.dil_no == None %} - {% else %} {{ response_data.dil_no }} {% endif %}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="label no-right-border">Package ID:</td>
+                        <td class="value no-left-border"><span>{% if response_data.package_id == None %} - {% else %} {{ response_data.package_id }} {%endif %}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="label no-right-border">Bar Code:</td>
+                        <td class="value no-left-border"><span>{% if response_data.barcode == None %} - {% else %} {{ response_data.barcode }} {% endif %}</span></td>
                     </tr>
                 </table>
             </td>
@@ -139,12 +147,16 @@
             <td>
                 <table class="sub-section">
                     <tr>
-                        <td class="label no-right-border">PAKAGE NO:</td>
-                        <td class="value left-border">81-47-454-1529</td>
+                        <td class="label no-right-border">Size:</td>
+                        <td class="value left-border">{{response_data.box_height}}x{{response_data.box_length}}x{{response_data.box_breadth}}</td>
                     </tr>
                     <tr>
-                        <td class="label no-right-border">JOB NAME NO:</td>
-                        <td class="value no-left-border">2009096018</td>
+                        <td class="label no-right-border">NT WT:</td>
+                        <td class="value left-border">{% if response_data.net_weight == None %} - {% else %} {{ response_data.net_weight }} Kg {% endif %}</td>
+                    </tr>
+                    <tr>
+                        <td class="label no-right-border">GR WT:</td>
+                        <td class="value no-left-border">{% if response_data.gr_weight == None %} - {% else %} {{ response_data.gr_weight }} Kg{% endif %}</td>
                     </tr>
                 </table>
             </td>
