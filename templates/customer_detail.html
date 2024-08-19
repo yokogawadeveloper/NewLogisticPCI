@@ -83,11 +83,7 @@
                     <tr>
                         <td class="label no-right-border">M/S:</td>
                         <td class="value no-left-border">
-                            <span>
-                                {{ response_data.ship_to_party_name }},<br>
-                                {{ response_data.ship_to_address }},<br>
-                                {{ response_data.area }}
-                            </span>
+                            <span>{% if response_data.customer_name == None %} - {% else %} {{ response_data.customer_name }} {% endif %}</span>
                         </td>
                     </tr>
                     <tr>
@@ -102,11 +98,11 @@
                 <table class="sub-section">
                     <tr>
                         <td class="label no-right-border">PO NO:</td>
-                        <td class="value no-left-border">BA132200-DXKC101</td>
+                        <td class="value no-left-border"><span>{% if response_data.po_no == None %} - {% else %} {{ response_data.po_no }} {%endif %}</span></td>
                     </tr>
                     <tr>
                         <td class="label no-right-border">DATE:</td>
-                        <td class="value no-left-border">24-05-2024</td>
+                        <td class="value no-left-border">{% if response_data.po_date == None %} - {% else %} {{ response_data.po_date }} {% endif %}</td>
                     </tr>
                 </table>
             </td>
@@ -116,15 +112,15 @@
                 <table class="sub-section">
                     <tr>
                         <td class="label no-right-border">KIND ATTN:</td>
-                        <td class="value no-left-border">Mr. Sungil Jung</td>
+                        <td class="value no-left-border">{% if response_data.customer_name == None %} - {% else %} {{ response_data.customer_name }} {%endif %}</span></td>
                     </tr>
                     <tr>
                         <td class="label no-right-border">PHONE NO:</td>
-                        <td class="value no-left-border">81-47-454-1529</td>
+                        <td class="value no-left-border">{% if response_data.customer_number == None %} - {% else %} {{ response_data.customer_number }} {%endif %}</span></td>
                     </tr>
                     <tr>
                         <td class="label no-right-border">SO NO:</td>
-                        <td class="value no-left-border">2009096018</td>
+                        <td class="value no-left-border"><span>{% if response_data.so_no == None %} - {% else %} {{ response_data.so_no }} {%endif %}</span></td>
                     </tr>
                 </table>
             </td>
