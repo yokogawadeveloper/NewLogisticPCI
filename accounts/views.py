@@ -81,7 +81,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class EmployeeUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = EmployeeUserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         query_set = self.queryset.filter(is_active=True)

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        table {
+            width: 100%;
+            max-width: 600px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            border-collapse: collapse;
+            /* To avoid double borders */
+        }
+
+        .main {
+            border: 2px solid black;
+            /* Border for main table */
+        }
+
+        .main td,
+        .main th {
+            border: 1px solid black;
+            padding: 3px;
+        }
+
+        .sub-section {
+            border: none;
+            /* No border for sub-section tables */
+        }
+
+        .sub-section td,
+        .sub-section th {
+            border: none;
+            /* No border for cells in sub-section tables */
+        }
+
+        .label {
+            font-size: 25px;
+            font-weight: bold;
+
+        }
+
+        .value {
+            font-size: 25px;
+            font-weight: bold;
+        }
+
+        .no-right-border {
+            border-right: none;
+        }
+
+        .no-left-border {
+            border-left: none;
+        }
+
+        .left-border {
+            border-collapse: collapse;
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <table class="main">
+        <tr>
+            <td>
+                <table class="sub-section">
+                    <tr>
+                        <td class="label" colspan="2">CONSIGNEE:</td>
+                    </tr>
+                    <tr>
+                        <td class="value" colspan="2">M/S.</td>
+                    </tr>
+                    <tr>
+                        <td class="label no-right-border">A/C:</td>
+                        <td class="value no-left-border">-</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <table class="sub-section">
+                    <tr>
+                        <td class="label no-right-border">PO NO:</td>
+                        <td class="value no-left-border">BA132200-DXKC101</td>
+                    </tr>
+                    <tr>
+                        <td class="label no-right-border">DATE:</td>
+                        <td class="value no-left-border">24-05-2024</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <table class="sub-section">
+                    <tr>
+                        <td class="label no-right-border">KIND ATTN:</td>
+                        <td class="value no-left-border">Mr. Sungil Jung</td>
+                    </tr>
+                    <tr>
+                        <td class="label no-right-border">PHONE NO:</td>
+                        <td class="value no-left-border">81-47-454-1529</td>
+                    </tr>
+                    <tr>
+                        <td class="label no-right-border">SO NO:</td>
+                        <td class="value no-left-border">2009096018</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <table class="sub-section">
+                    <tr>
+                        <td class="label no-right-border">COMP NO:</td>
+                        <td class="value no-left-border">STN-0618-A</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <table class="sub-section">
+                    <tr>
+                        <td class="label no-right-border">PAKAGE NO:</td>
+                        <td class="value left-border">81-47-454-1529</td>
+                    </tr>
+                    <tr>
+                        <td class="label no-right-border">JOB NAME NO:</td>
+                        <td class="value no-left-border">2009096018</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>
