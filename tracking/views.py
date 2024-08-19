@@ -237,6 +237,7 @@ class TruckListViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data)
         if serializer.is_valid():
+            print("Validated Data:", serializer.validated_data)
             serializer.save(updated_by=request.user)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -246,6 +247,20 @@ class TruckListViewSet(viewsets.ModelViewSet):
         instance.is_active = False
         instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['put'], url_path=r'update_transportation/(?P<pk>[^/.]+)')
+    def update_transportation(self, request, pk=None):
+        try:
+            truck_list = self.get_object()
+        except TruckList.DoesNotExist:
+            return Response({'error': 'TruckList not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = TruckTransportationUpdateSerializer(truck_list, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['post'], detail=False, url_path='create_truck_list')
     def create_truck_list(self, request):
@@ -518,7 +533,8 @@ class TruckDIlMappingViewSet(viewsets.ModelViewSet):
             truck_list = TruckList.objects.get(id=truck_list_id)
             for dil_id in dil_ids:
                 dispatch = DispatchInstruction.objects.get(dil_id=dil_id)
-                truck_mapping = TruckDilMappingDetails(truck_list_id=truck_list, dil_id=dispatch,created_by=request.user)
+                truck_mapping = TruckDilMappingDetails(truck_list_id=truck_list, dil_id=dispatch,
+                                                       created_by=request.user)
                 truck_mapping.save()
                 return Response({'message': 'Truck Mapping Created'}, status=status.HTTP_201_CREATED)
         except Exception as e:

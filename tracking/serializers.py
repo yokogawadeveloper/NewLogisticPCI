@@ -57,6 +57,17 @@ class TruckListSerializer(serializers.ModelSerializer):
             self.fields.pop('check_out_by')
 
 
+class TruckTransportationUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TruckList
+        fields = "__all__"
+
+    def update(self, instance, validated_data):
+        instance.transportation = validated_data.get('transportation', instance.transportation)
+        instance.save()
+        return instance
+
+
 class TruckDIlMappingSerializer(serializers.ModelSerializer):
     class Meta:
         model = TruckDilMappingDetails
