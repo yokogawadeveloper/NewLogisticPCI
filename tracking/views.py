@@ -769,48 +769,51 @@ class DeliveryChallanViewSet(viewsets.ModelViewSet):
             no_of_boxes = truck_list.first().no_of_boxes if truck_list.exists() else 0
 
             if truck_list.exists():  # Check if truck_list exists
-                delivery_challan = DeliveryChallan.objects.create(
-                    truck_list=truck_list.first(),
-                    e_way_bill_no=data.get('e_way_bill_no'),
-                    lrn_no=data.get('lrn_no'),
-                    lrn_date=data.get('lrn_date'),
-                    remarks=data.get('remarks'),
-                    description_of_goods=data.get('description_of_goods'),
-                    mode_of_delivery=data.get('mode_of_delivery'),
-                    freight_mode=data.get('freight_mode'),
-                    destination=data.get('destination'),
-                    kind_attended=data.get('kind_attended'),
-                    consignee_remakes=data.get('consignee_remakes'),
-                    no_of_boxes=no_of_boxes,
-                    created_by=request.user,
-                    updated_by=request.user
-                )
-                for dc_inv in dc_invoice_details:
-                    bill_no = dc_inv.get('bill_no')
-                    bill_date = dc_inv.get('bill_date')
-                    if bill_no:
-                        dispatch = DispatchInstruction.objects.filter(dil_id=dc_inv.get('dil_id'))
-                        DCInvoiceDetails.objects.create(
-                            delivery_challan=delivery_challan,
-                            truck_list=truck_list.first(),
-                            dil_id=dispatch.first() if dispatch.exists() else None,
-                            bill_no=dc_inv.get('bill_no'),
-                            bill_date=bill_date,  # Assign formatted date or None
-                            bill_type=dc_inv.get('bill_type'),
-                            bill_amount=dc_inv.get('bill_amount'),
-                            eway_bill_no=dc_inv.get('eway_bill_no'),
-                            eway_bill_date=dc_inv.get('eway_bill_date'),
-                            created_by=request.user,
-                            updated_by=request.user
-                        )
+                with transaction.atomic():  # Start atomic transaction
+                    delivery_challan = DeliveryChallan.objects.create(
+                        truck_list=truck_list.first(),
+                        e_way_bill_no=data.get('e_way_bill_no'),
+                        lrn_no=data.get('lrn_no'),
+                        lrn_date=data.get('lrn_date'),
+                        remarks=data.get('remarks'),
+                        description_of_goods=data.get('description_of_goods'),
+                        mode_of_delivery=data.get('mode_of_delivery'),
+                        freight_mode=data.get('freight_mode'),
+                        destination=data.get('destination'),
+                        kind_attended=data.get('kind_attended'),
+                        consignee_remakes=data.get('consignee_remakes'),
+                        no_of_boxes=no_of_boxes,
+                        created_by=request.user,
+                        updated_by=request.user
+                    )
 
-                serializer = DeliveryChallanSerializer(delivery_challan)
-                # Update truck list status & Dispatch status
-                truck_list.update(status='DC Created', tracking_status=3)
-                dil_ids = truck_loading_details.values_list('dil_id', flat=True).distinct()
-                dispatch = DispatchInstruction.objects.filter(dil_id__in=dil_ids)
-                dispatch.update(dil_status_no=15, dil_status='DC Created')
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                    for dc_inv in dc_invoice_details:
+                        bill_no = dc_inv.get('bill_no')
+                        bill_date = dc_inv.get('bill_date')
+                        if bill_no:
+                            dispatch = DispatchInstruction.objects.filter(dil_id=dc_inv.get('dil_id'))
+                            DCInvoiceDetails.objects.create(
+                                delivery_challan=delivery_challan,
+                                truck_list=truck_list.first(),
+                                dil_id=dispatch.first() if dispatch.exists() else None,
+                                bill_no=dc_inv.get('bill_no'),
+                                bill_date=bill_date,  # Assign formatted date or None
+                                bill_type=dc_inv.get('bill_type'),
+                                bill_amount=dc_inv.get('bill_amount'),
+                                eway_bill_no=dc_inv.get('eway_bill_no'),
+                                eway_bill_date=dc_inv.get('eway_bill_date'),
+                                created_by=request.user,
+                                updated_by=request.user
+                            )
+
+                    # Update truck list status & Dispatch status
+                    truck_list.update(status='DC Created', tracking_status=3)
+                    dil_ids = truck_loading_details.values_list('dil_id', flat=True).distinct()
+                    dispatch = DispatchInstruction.objects.filter(dil_id__in=dil_ids)
+                    dispatch.update(dil_status_no=15, dil_status='DC Created')
+
+                    serializer = DeliveryChallanSerializer(delivery_challan)
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
                 return Response({'error': 'Truck list not found'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -823,43 +826,47 @@ class DeliveryChallanViewSet(viewsets.ModelViewSet):
             challan_id = data.get('id')
             truck_list_id = data.get('truck_list')
             dc_invoice_details = data.get('dc_inv_details')
-            # Main Logic
+
             delivery_challan = DeliveryChallan.objects.filter(id=challan_id)
             truck_list = TruckList.objects.filter(id=truck_list_id)
+
             if delivery_challan.exists():
-                delivery_challan.update(
-                    truck_list=truck_list.first(),
-                    e_way_bill_no=data.get('e_way_bill_no'),
-                    lrn_no=data.get('lrn_no'),
-                    lrn_date=data.get('lrn_date'),
-                    remarks=data.get('remarks'),
-                    no_of_boxes=truck_list.first().no_of_boxes,
-                    updated_by=request.user
-                )
-                # Delete existing invoice details
-                DCInvoiceDetails.objects.filter(delivery_challan=delivery_challan.first()).delete()
-                for dc_inv in dc_invoice_details:
-                    bill_no = dc_inv.get('bill_no')
-                    bill_date = dc_inv.get('bill_date')
-                    # if bill_date:
-                    #     bill_date = datetime.datetime.strptime(bill_date, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d")
-                    # else:
-                    #     bill_date = None
-                    DCInvoiceDetails.objects.create(
-                        delivery_challan=delivery_challan.first(),
+                with transaction.atomic():  # Start atomic transaction
+                    # Update the delivery challan details
+                    delivery_challan.update(
                         truck_list=truck_list.first(),
-                        dil_id_id=dc_inv.get('dil_id'),
-                        bill_no=bill_no,
-                        bill_date=bill_date,
-                        bill_type=dc_inv.get('bill_type'),
-                        bill_amount=dc_inv.get('bill_amount'),
-                        eway_bill_no=dc_inv.get('eway_bill_no'),
-                        eway_bill_date=dc_inv.get('eway_bill_date'),
-                        created_by=request.user,
+                        e_way_bill_no=data.get('e_way_bill_no'),
+                        lrn_no=data.get('lrn_no'),
+                        lrn_date=data.get('lrn_date'),
+                        remarks=data.get('remarks'),
+                        no_of_boxes=truck_list.first().no_of_boxes if truck_list.exists() else 0,
                         updated_by=request.user
                     )
-                serializer = DeliveryChallanSerializer(delivery_challan.first())
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+                    # Delete existing invoice details
+                    DCInvoiceDetails.objects.filter(delivery_challan=delivery_challan.first()).delete()
+
+                    # Recreate the invoice details
+                    for dc_inv in dc_invoice_details:
+                        bill_no = dc_inv.get('bill_no')
+                        bill_date = dc_inv.get('bill_date')
+                        DCInvoiceDetails.objects.create(
+                            delivery_challan=delivery_challan.first(),
+                            truck_list=truck_list.first(),
+                            dil_id_id=dc_inv.get('dil_id'),
+                            bill_no=bill_no,
+                            bill_date=bill_date,
+                            bill_type=dc_inv.get('bill_type'),
+                            bill_amount=dc_inv.get('bill_amount'),
+                            eway_bill_no=dc_inv.get('eway_bill_no'),
+                            eway_bill_date=dc_inv.get('eway_bill_date'),
+                            created_by=request.user,
+                            updated_by=request.user
+                        )
+
+                    # Serialize the updated delivery challan and return response
+                    serializer = DeliveryChallanSerializer(delivery_challan.first())
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
                 return Response({'error': 'Truck list not found'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
