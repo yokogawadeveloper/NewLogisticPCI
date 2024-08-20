@@ -798,6 +798,8 @@ class DeliveryChallanViewSet(viewsets.ModelViewSet):
                             bill_date=bill_date,  # Assign formatted date or None
                             bill_type=dc_inv.get('bill_type'),
                             bill_amount=dc_inv.get('bill_amount'),
+                            eway_bill_no=dc_inv.get('eway_bill_no'),
+                            eway_bill_date=dc_inv.get('eway_bill_date'),
                             created_by=request.user,
                             updated_by=request.user
                         )
@@ -851,6 +853,8 @@ class DeliveryChallanViewSet(viewsets.ModelViewSet):
                         bill_date=bill_date,
                         bill_type=dc_inv.get('bill_type'),
                         bill_amount=dc_inv.get('bill_amount'),
+                        eway_bill_no=dc_inv.get('eway_bill_no'),
+                        eway_bill_date=dc_inv.get('eway_bill_date'),
                         created_by=request.user,
                         updated_by=request.user
                     )

@@ -237,6 +237,8 @@ class DCInvoiceDetails(models.Model):
     bill_date = models.DateField(null=True, blank=True)
     bill_type = models.CharField(max_length=100, null=True)
     bill_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
+    eway_bill_no = models.CharField(max_length=100, null=True, blank=True)
+    eway_bill_date = models.DateField(null=True, blank=True)
     # other fields
     created_by = models.ForeignKey(User, related_name='+', null=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
