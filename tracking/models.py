@@ -236,7 +236,7 @@ class DCInvoiceDetails(models.Model):
     bill_no = models.CharField(max_length=100, null=True, blank=True)
     bill_date = models.DateField(null=True, blank=True)
     bill_type = models.CharField(max_length=100, null=True)
-    bill_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
+    bill_amount = models.FloatField(null=True, blank=True)
     eway_bill_no = models.CharField(max_length=100, null=True, blank=True)
     eway_bill_date = models.DateField(null=True, blank=True)
     # other fields

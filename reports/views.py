@@ -823,7 +823,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                 "Plot No.96, Electronic City Complex, Hosur Road",
                 "Bangalore-560100, India",
                 "State Name & Code: Karnataka-29 India",
-                "Phone: +91-80-2852-1100",
+                "Phone:  +91(080) 41586000",
             ]
             text_object = canvas.beginText(inch, height - 2 * inch)
             for line in company_info:
@@ -953,19 +953,12 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                         draw_footer(canvas, page_number, total_pages)
                         y_position = height - 3 * inch
                     canvas.setFont("Helvetica", 8)
-                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position,
-                                                     item_packing['item_ref_id'].get('material_description', ''),
-                                                     4 * inch)
-                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position,
-                                                     item_packing['item_ref_id'].get('linkage_no', ''), 4 * inch)
-                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position,
-                                                     item_packing['item_ref_id'].get('ms_code', ''), 2 * inch)
-                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position, "Cust PO  SI No: " + (
-                            item_packing['item_ref_id'].get('customer_po_sl_no', '') or ''), 2 * inch)
-                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position, "Cust Part No: " + (
-                            item_packing['item_ref_id'].get('customer_po_item_code', '') or ''), 2 * inch)
-                    canvas.drawString(5 * inch + x_gap + 10, y_position + 50,
-                                      str(item_packing.get('item_qty', '')) + " ST")
+                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position,item_packing['item_ref_id'].get('material_description', ''),4 * inch)
+                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position,item_packing['item_ref_id'].get('ms_code', ''), 2 * inch)
+                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position,item_packing['item_ref_id'].get('linkage_no', ''), 4 * inch)
+                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position, "Cust PO  SI No: " + (item_packing['item_ref_id'].get('customer_po_sl_no', '') or ''), 2 * inch)
+                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position, "Cust Part No: " + (item_packing['item_ref_id'].get('customer_po_item_code', '') or ''), 2 * inch)
+                    canvas.drawString(5 * inch + x_gap + 10, y_position + 50,str(item_packing.get('item_qty', '')) + " ST")
                     canvas.setFont("Helvetica", 8)
                     y_position -= 20  # Adjust for item packing spacing
                     count = 0
@@ -1153,7 +1146,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                 "Plot No.96, Electronic City Complex, Hosur Road",
                 "Bangalore-560100, India",
                 "State Name & Code: Karnataka-29 India",
-                "Phone: +91-80-2852-1100",
+                "Phone: +91(080) 41586000",
             ]
             text_object = canvas.beginText(inch, height - 2 * inch)
             for line in company_info:
@@ -1290,19 +1283,12 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                         draw_footer(canvas, page_number, total_pages)
                         y_position = height - 3 * inch
                     canvas.setFont("Helvetica", 8)
-                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position,
-                                                     item_packing['item_ref_id'].get('material_description', ''),
-                                                     4 * inch)
-                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position,
-                                                     item_packing['item_ref_id'].get('linkage_no', ''), 4 * inch)
-                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position,
-                                                     item_packing['item_ref_id'].get('ms_code', ''), 2 * inch)
-                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position, "Cust PO  SI No: " + (
-                            item_packing['item_ref_id'].get('customer_po_sl_no', '') or ''), 2 * inch)
-                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position, "Cust Part No: " + (
-                            item_packing['item_ref_id'].get('customer_po_item_code', '') or ''), 2 * inch)
-                    canvas.drawString(5 * inch + x_gap + 10, y_position + 50,
-                                      str(item_packing.get('item_qty', '')) + " ST")
+                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position,item_packing['item_ref_id'].get('material_description', ''),4 * inch)
+                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position,item_packing['item_ref_id'].get('ms_code', ''), 2 * inch)
+                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position,item_packing['item_ref_id'].get('linkage_no', ''), 4 * inch)
+                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position, "Cust PO  SI No: " + (item_packing['item_ref_id'].get('customer_po_sl_no', '') or ''), 2 * inch)
+                    y_position = draw_wrapped_string(canvas, 2 * inch + x_gap, y_position, "Cust Part No: " + (item_packing['item_ref_id'].get('customer_po_item_code', '') or ''), 2 * inch)
+                    canvas.drawString(5 * inch + x_gap + 10, y_position + 50,str(item_packing.get('item_qty', '')) + " ST")
                     canvas.setFont("Helvetica", 8)
                     y_position -= 20  # Adjust for item packing spacing
                     count = 0  # Counter for inline items
