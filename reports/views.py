@@ -1413,16 +1413,15 @@ class CustomerConsigneeExport(viewsets.ModelViewSet):
                 'dispatch_data': dispatch_serializer.data,
                 'master_list': item_serializer.data,
                 'dc_invoice_data': dc_invoice_serializer.data,
-
                 'today': datetime.datetime.now().date(),
                 'descOfGoods': delivery_challan.description_of_goods,
                 'transporter_name': transporter.transportation_name,
                 'destination': delivery_challan.destination,
-                'mode_of_delivery': delivery_challan.mode_of_delivery,
-                'freight_mode': delivery_challan.freight_mode,
                 'consignee_remakes': delivery_challan.consignee_remakes,
                 'total_consignee_value': total_consignee_value or 0.0,
-                'insurance': dispatch.insurance_scope.insurance_scope_name if dispatch.insurance_scope else None
+                'insurance': dispatch.insurance_scope.insurance_scope_name if dispatch.insurance_scope else None,
+                'mode_of_delivery': dispatch.mode_of_shipment.mode_of_shipment_name if dispatch.mode_of_shipment else None,
+                'freight_mode': dispatch.freight_basis.freight_basis_name if dispatch.freight_basis else None
             }
             # Create PDF file
             # return Response(context)

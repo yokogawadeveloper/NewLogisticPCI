@@ -7,6 +7,7 @@ from .serializers import *
 from .models import *
 import pyodbc
 import os
+import time
 
 
 # ViewSets define the view behavior.
@@ -90,6 +91,9 @@ class ConnectionDispatchViewSet(viewsets.ModelViewSet):
             # Establish connection
             connection = pyodbc.connect('DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
             connection_cursor = connection.cursor()
+            connection_cursor.execute("exec Sp_UpdateSerialNumber '2005228229', '4418','400136'")
+            time.sleep(40)
+            connection_cursor.commit()
             # Fetch item numbers based on so_no
             item_nos_query = MasterItemList.objects.filter(dil_id=dil_id).values_list('item_no', flat=True)
             item_nos = list(item_nos_query)
