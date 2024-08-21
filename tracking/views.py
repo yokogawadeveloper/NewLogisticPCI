@@ -413,9 +413,9 @@ class TruckListViewSet(viewsets.ModelViewSet):
                 dispatch_serializer = DispatchInstructionSerializer(dispatch, many=True)
 
                 delivery_challan = DeliveryChallan.objects.filter(truck_list=data['id'])
-                delivery_challan_serializer = DeliveryChallanSerializer(delivery_challan.first(), many=False)
+                un_related_delivery_challan_serializer = UnRelatedDeliveryChallanSerializer(delivery_challan.first(), many=False)
 
-                data['delivery_challan'] = delivery_challan_serializer.data
+                data['delivery_challan'] = un_related_delivery_challan_serializer.data
                 data['dispatch'] = dispatch_serializer.data
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:

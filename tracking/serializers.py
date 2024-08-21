@@ -95,10 +95,10 @@ class TruckDeliveryDetailsSerializer(serializers.ModelSerializer):
 
 
 class DCInvoiceDetailsSerializer(serializers.ModelSerializer):
-    # lrn_no = serializers.ReadOnlyField(source='delivery_challan.lrn_no')
-    # lrn_date = serializers.ReadOnlyField(source='delivery_challan.lrn_date')
-    # e_way_bill_no = serializers.ReadOnlyField(source='delivery_challan.e_way_bill_no')
-    # truck_no = serializers.ReadOnlyField(source='truck_list.vehicle_no')
+    lrn_no = serializers.ReadOnlyField(source='delivery_challan.lrn_no')
+    lrn_date = serializers.ReadOnlyField(source='delivery_challan.lrn_date')
+    e_way_bill_no = serializers.ReadOnlyField(source='delivery_challan.e_way_bill_no')
+    truck_no = serializers.ReadOnlyField(source='truck_list.vehicle_no')
     no_of_packages = serializers.SerializerMethodField()
 
     class Meta:
@@ -121,6 +121,27 @@ class DeliveryChallanSerializer(serializers.ModelSerializer):
                   'kind_attended', 'consignee_remakes', 'remarks', 'created_by', 'created_at',
                   'updated_by', 'updated_at', 'is_active', 'dc_invoice_details'
                   )
+
+
+# unrelated serializer
+class UnRelatedDCInvoiceDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DCInvoiceDetails
+        fields = '__all__'
+
+
+class UnRelatedDeliveryChallanSerializer(serializers.ModelSerializer):
+    dc_invoice_details = UnRelatedDCInvoiceDetailsSerializer(many=True)
+
+    class Meta:
+        model = DeliveryChallan
+        fields = (
+            'id', 'truck_list', 'e_way_bill_no', 'e_way_bills_date', 'delivers_dates', 'lrn_no', 'lrn_date',
+            'no_of_boxes',
+            'description_of_goods', 'mode_of_delivery', 'freight_mode', 'destination', 'kind_attended',
+            'consignee_remakes',
+            'remarks', 'created_by', 'created_at', 'updated_by', 'updated_at', 'is_active', 'dc_invoice_details'
+        )
 
 
 class InvoiceChequeDetailsSerializer(serializers.ModelSerializer):
