@@ -95,10 +95,10 @@ class TruckDeliveryDetailsSerializer(serializers.ModelSerializer):
 
 
 class DCInvoiceDetailsSerializer(serializers.ModelSerializer):
-    lrn_no = serializers.ReadOnlyField(source='delivery_challan.lrn_no')
-    lrn_date = serializers.ReadOnlyField(source='delivery_challan.lrn_date')
-    e_way_bill_no = serializers.ReadOnlyField(source='delivery_challan.e_way_bill_no')
-    truck_no = serializers.ReadOnlyField(source='truck_list.vehicle_no')
+    # lrn_no = serializers.ReadOnlyField(source='delivery_challan.lrn_no')
+    # lrn_date = serializers.ReadOnlyField(source='delivery_challan.lrn_date')
+    # e_way_bill_no = serializers.ReadOnlyField(source='delivery_challan.e_way_bill_no')
+    # truck_no = serializers.ReadOnlyField(source='truck_list.vehicle_no')
     no_of_packages = serializers.SerializerMethodField()
 
     class Meta:
