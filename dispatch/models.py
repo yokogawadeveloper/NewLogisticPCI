@@ -294,8 +294,7 @@ class MasterItemList(models.Model):
 
 class InlineItemList(models.Model):
     inline_item_id = models.AutoField(primary_key=True)
-    master_item = models.ForeignKey(MasterItemList, related_name='inline_items', on_delete=models.CASCADE, null=True,
-                                    blank=True)
+    master_item = models.ForeignKey(MasterItemList, related_name='inline_items', on_delete=models.CASCADE, null=True, blank=True)
     serial_no = models.CharField(max_length=100, null=True, blank=True)
     tag_no = models.CharField(max_length=100, null=True, blank=True)
     accessory = models.CharField(max_length=100, null=True, blank=True)

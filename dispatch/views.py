@@ -473,7 +473,8 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
                 username = 'sa'
                 password = 'LogDB*$@#032024'
                 # Establish connection
-                connection = pyodbc.connect('DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
+                connection = pyodbc.connect(
+                    'DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
                 connection_cursor = connection.cursor()
                 # Execute query
                 query = 'SELECT TOP 1 PONO, PODate, PaymentomText, PaymentomId, WarrantyPeriod, CustCode, SalePerson FROM WA_SaleOrderMaster WHERE SoNo = ?'
@@ -1146,6 +1147,24 @@ class InlineItemListViewSet(viewsets.ModelViewSet):
             filter_data = InlineItemList.objects.filter(**data)
             serializer = InlineItemListSerializer(filter_data, many=True)
             return Response(serializer.data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['post'], detail=False, url_path='create_inline_serial_no_with_master_item')
+    def create_inline_serial_no_with_master_item(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            master_item_id = data['master_item_id']
+            inline_list = data['inline_list']
+            master_item = MasterItemList.objects.filter(item_id=master_item_id).first()
+            for item in inline_list:
+                inline_item = InlineItemList(
+                    master_item=master_item,
+                    serial_no=item['serial_no'],
+                    tag_no=item['tag_no']
+                )
+                inline_item.save()
+            return Response({'message': 'Inline Items created successfully', 'status': status.HTTP_201_CREATED})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
