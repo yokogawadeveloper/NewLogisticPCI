@@ -17,10 +17,6 @@ from .serializers import *
 
 
 # Create your views here.
-def calculate_total_pages():
-    return 0
-
-
 class PackingListPDFViewSet(viewsets.ModelViewSet):
     queryset = BoxDetails.objects.all()
     serializer_class = PackingListPDFBoxDetailsSerializer
