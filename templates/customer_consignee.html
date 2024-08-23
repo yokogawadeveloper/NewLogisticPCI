@@ -169,7 +169,7 @@
                 <td colspan="2" style='text-align: center;border:solid 1px;'>{% if data.lrn_no == None %} - {% else %} {{data.lrn_no}} {% endif %}/{% if data.lrn_date == None %} - {% else %} {{data.lrn_date}} {% endif %}</td>
                 <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.truck_no == None %} - {% else %} {{data.truck_no}} {% endif %}</td>
                 <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.no_of_packages == None %} - {% else %} {{data.no_of_packages}} {% endif %}</td>
-                <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.e_way_bill_no == None %} - {% else %} {{data.e_way_bill_no}} {% endif %}</td>
+                <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.eway_bill_no == None %} - {% else %} {{data.eway_bill_no}} {% endif %}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -257,11 +257,11 @@
             <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
                 {% if insurance == "BY YIL" %}
                 <p>
-                    Transit insurance is covered from Our end.
+                    Transit insurance has been covered from our end.
                 </p>
                 {% else %}
                 <p>
-                    Transit insurance is covered from By Customer.
+                    Kindly arrange transit insurance from your end.
                 </p>
                 {% endif %}
             </td>
