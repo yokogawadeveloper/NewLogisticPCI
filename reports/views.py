@@ -1312,10 +1312,9 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
 
         # Send the PDF to the client
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="dispatch_packing_list_{dispatch.dil_id}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="dispatch_packing_summary_{dispatch.dil_id}.pdf"'
         buffer.seek(0)
         response.write(buffer.getvalue())
-
         return response
 
 
