@@ -252,6 +252,15 @@ class DispatchUnRelatedViewSet(viewsets.ModelViewSet):
     serializer_class = DispatchUnRelatedSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @action(methods=['get'], detail=False, url_path='dispatch_on_packing_flag')
+    def dispatch_on_packing_flag(self, request):
+        dispatch = DispatchInstruction.objects.filter(only_for_packing_flag=False).order_by('-dil_id')
+        serializer = DispatchUnRelatedSerializer(dispatch, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
 
 class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
     queryset = DispatchInstruction.objects.all()
@@ -473,7 +482,8 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
                 username = 'sa'
                 password = 'LogDB*$@#032024'
                 # Establish connection
-                connection = pyodbc.connect('DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
+                connection = pyodbc.connect(
+                    'DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
                 connection_cursor = connection.cursor()
                 # Execute query
                 query = 'SELECT TOP 1 PONO, PODate, PaymentomText, PaymentomId, WarrantyPeriod, CustCode, SalePerson FROM WA_SaleOrderMaster WHERE SoNo = ?'
@@ -1293,10 +1303,12 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
 
                     else:
                         wf_da_status = \
-                            WorkFlowDaApprovers.objects.filter(dil_id_id=data['dil_id'], emp_id=user_id).values('approver')[0]['approver']
+                            WorkFlowDaApprovers.objects.filter(dil_id_id=data['dil_id'], emp_id=user_id).values(
+                                'approver')[0]['approver']
                         data['approver'] = wf_da_status
 
-                        allocation = DAUserRequestAllocation.objects.filter(dil_id_id=dil_id, emp_id=user_id,approver_level=current_level)
+                        allocation = DAUserRequestAllocation.objects.filter(dil_id_id=dil_id, emp_id=user_id,
+                                                                            approver_level=current_level)
                         # approver_stages = allocation.values('approver_stage')[0]['approver_stage']
                         allocation.update(status="approved", approved_date=datetime.now(), approver_flag=True)
                         # DAUserRequestAllocation.objects.filter(dil_id_id=dil_id).update(approver_flag=True)
@@ -1484,6 +1496,28 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
             else:
                 return Response({'message': 'DA not found', 'status': status.HTTP_204_NO_CONTENT})
             return Response({'message': 'DA Packing Acknowledged', 'status': status.HTTP_201_CREATED})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['post'], detail=False, url_path='create_approval_for_dispatch')
+    def create_approval_for_dispatch(self, request):
+        try:
+            data = request.data
+            dil_id = data['dil_id']
+            remarks = data['remarks']
+            stature = data['status']
+            with transaction.atomic():
+                dispatch = DispatchInstruction.objects.filter(dil_id=dil_id)
+                if dispatch.exists():
+                    dispatch.update(only_for_packing_flag=False)
+                    DAAuthThreads.objects.create(
+                        dil_id=dispatch.first(),
+                        emp_id=request.user.id,
+                        remarks=remarks,
+                        status=stature,
+                        created_by_id=request.user.id
+                    )
+                return Response({'message': 'Approval For Dispatch Created!'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
