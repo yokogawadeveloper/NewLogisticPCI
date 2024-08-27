@@ -473,8 +473,7 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
                 username = 'sa'
                 password = 'LogDB*$@#032024'
                 # Establish connection
-                connection = pyodbc.connect(
-                    'DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
+                connection = pyodbc.connect('DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
                 connection_cursor = connection.cursor()
                 # Execute query
                 query = 'SELECT TOP 1 PONO, PODate, PaymentomText, PaymentomId, WarrantyPeriod, CustCode, SalePerson FROM WA_SaleOrderMaster WHERE SoNo = ?'
@@ -1168,6 +1167,24 @@ class InlineItemListViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(methods=['post'], detail=False, url_path='update_inline_serial_no_with_master_item')
+    def update_inline_serial_no_with_master_item(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            master_item_id = data['master_item_id']
+            serial_no = data['serial_no']
+            tag_no = data['tag_no']
+            inline_item = InlineItemList.objects.filter(master_item_id=master_item_id).order_by('inline_item_id')
+            for item in inline_item:
+                if item.serial_no is None and item.tag_no is None:
+                    item.serial_no = serial_no
+                    item.tag_no = tag_no
+                    item.save()
+                    break
+            return Response({'message': 'Inline Item Updated!'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class DAUserRequestAllocationViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
@@ -1239,6 +1256,7 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
             user_id = request.user.id
             stature = data['status']
             dil_id = data['dil_id']
+            only_packing_flag = data['only_packing_flag']
             requester = request.user.name
             with transaction.atomic():
                 dil = DispatchInstruction.objects.select_for_update().filter(dil_id=dil_id)
@@ -1275,14 +1293,10 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
 
                     else:
                         wf_da_status = \
-                            WorkFlowDaApprovers.objects.filter(dil_id_id=data['dil_id'], emp_id=user_id).values(
-                                'approver')[
-                                0][
-                                'approver']
+                            WorkFlowDaApprovers.objects.filter(dil_id_id=data['dil_id'], emp_id=user_id).values('approver')[0]['approver']
                         data['approver'] = wf_da_status
 
-                        allocation = DAUserRequestAllocation.objects.filter(dil_id_id=dil_id, emp_id=user_id,
-                                                                            approver_level=current_level)
+                        allocation = DAUserRequestAllocation.objects.filter(dil_id_id=dil_id, emp_id=user_id,approver_level=current_level)
                         # approver_stages = allocation.values('approver_stage')[0]['approver_stage']
                         allocation.update(status="approved", approved_date=datetime.now(), approver_flag=True)
                         # DAUserRequestAllocation.objects.filter(dil_id_id=dil_id).update(approver_flag=True)
@@ -1296,7 +1310,8 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                                 dil.update(
                                     current_level=current_level,
                                     dil_status=wf_da_status + ' ' + 'approved',
-                                    dil_status_no=2
+                                    dil_status_no=2,
+                                    only_for_packing_flag=only_packing_flag
                                 )
                                 flow_approvers = WorkFlowDaApprovers.objects.filter(
                                     dil_id_id=dil_id,
@@ -1324,7 +1339,8 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                                 dil.update(
                                     current_level=current_level,
                                     dil_status=wf_da_status + ' ' + "approved",
-                                    dil_status_no=2
+                                    dil_status_no=2,
+                                    only_for_packing_flag=only_packing_flag
                                 )
                                 for i in flow_approvers:
                                     DAUserRequestAllocation.objects.create(

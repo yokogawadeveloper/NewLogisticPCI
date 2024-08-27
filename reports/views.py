@@ -1,5 +1,6 @@
 import datetime
 import os
+import base64
 from io import BytesIO
 from django.conf import settings
 from django.db.models import Sum
@@ -12,6 +13,9 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from xhtml2pdf import pisa
+from barcode import Code128
+from barcode.writer import ImageWriter
+from PIL import Image
 from tracking.serializers import *
 from .serializers import *
 
@@ -928,6 +932,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                     canvas.setDash()
                     y_position -= 20  # Adjust for dash line spacing
 
+
             return y_position, page_number
 
         # First pass: Create a PDF and count the pages
@@ -1638,6 +1643,22 @@ class CustomerDocumentsDetailsViewSet(viewsets.ModelViewSet):
             box_size = box_details.box_size.box_size_id
             dispatch = DispatchInstruction.objects.get(dil_id=dil_id)
             box = BoxSize.objects.get(box_size_id=box_size)
+            box_details_length = BoxDetails.objects.filter(dil_id=box_details.dil_id.dil_id, main_box=True).count()
+            # Generate barcode
+            barcode_buffer = BytesIO()
+            if box_details.box_code:
+                number = "box-da_2-5998"
+                my_code = Code128(number, writer=ImageWriter())
+                my_code.write(barcode_buffer,options={"write_text": False})
+                barcode_image = Image.open(barcode_buffer)
+                barcode_buffer.seek(0)
+
+                # Convert barcode to base64
+                barcode_base64 = base64.b64encode(barcode_buffer.getvalue()).decode('utf-8')
+                barcode_data = f'data:image/png;base64,{barcode_base64}'
+            else:
+                barcode_data = ""
+
             response_data = {
                 'dil_id': dispatch.dil_id,
                 'ship_to_party_name': dispatch.ship_to_party_name,
@@ -1651,10 +1672,12 @@ class CustomerDocumentsDetailsViewSet(viewsets.ModelViewSet):
                 'customer_name': dispatch.customer_name,
                 'customer_number': dispatch.customer_number,
                 'package_id': box_details.box_code,
-                'barcode': box_details.box_code,
+                'barcode': barcode_data,
                 'net_weight': box_details.net_weight,
                 'gr_weight': box_details.qa_wetness,
                 'box_size': box.box_size,
+                'box_no': str(box_details.box_serial_no) + "/" + str(box_details_length),
+                'box_type': box_details.box_size.box_type.box_type if box_details.box_size.box_type.box_type is not None else 'N/A',
                 'box_height': int(box_details.height if box_details.height is not None else 0),
                 'box_length': int(box_details.length if box_details.length is not None else 0),
                 'box_breadth': int(box_details.breadth if box_details.breadth is not None else 0)

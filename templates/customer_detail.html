@@ -41,11 +41,14 @@
             font-size: 25px;
             font-weight: bold;
 
+
         }
 
         .value {
             font-size: 25px;
-            font-weight: bold;
+            font-weight: 900;
+            text-align: start;
+            font-family: fantasy;
         }
 
         .no-right-border {
@@ -70,26 +73,31 @@
             <td>
                 <table class="sub-section">
                     <tr>
-                        <!-- <td class="label" colspan="2">CONSIGNEE:</td> -->
-                        <td class="label no-right-border">CONSIGNEE:</td>
-                        <td class="value no-left-border">
-                            <span>
-                                {{ response_data.ship_to_party_name }},<br>
-                                {{ response_data.ship_to_address }},<br>
-                                {{ response_data.area }}
-                            </span>
+                        <th width="10%"></th>
+                        <th width="10%"></th>
+                        <th width="10%"></th>
+                        <th width="10%"></th>
+                        <th width="10%"></th>
+                        <th width="10%"></th>
+                        <th width="10%"></th>
+                        <th WIDTH="10%"></th>
+                        <th width="10%"></th>
+                        <th width="10%"></th>
+
+                    </tr>
+                    <tr>
+                        <td class="label no-right-border" colspan="10"  style="">
+                            <div style="margin: 0; padding: 0;" >CONSIGNEE:</div>
                         </td>
                     </tr>
                     <tr>
-                        <td class="label no-right-border">M/S:</td>
-                        <td class="value no-left-border">
-                            <span>{% if response_data.customer_name == None %} - {% else %} {{ response_data.customer_name }} {% endif %}</span>
+
+                        <td class="value no-left-border" colspan="10"  style="font-size: 35px">
+                            <span style="font-size: 35px;">{{ response_data.ship_to_party_name }}</span><br>
+                            <span>{{ response_data.ship_to_address}}</span><br>
+                            <span>{{ response_data.area }}</span><br>
                         </td>
                     </tr>
-                    <tr>
-                        <td class="label no-right-border">A/C:</td>
-                        <td class="value no-left-border">-</td>
-                    </tr>
                 </table>
             </td>
         </tr>
@@ -97,13 +105,21 @@
             <td>
                 <table class="sub-section">
                     <tr>
-                        <td class="label no-right-border">PO NO:</td>
-                        <td class="value no-left-border"><span>{% if response_data.po_no == None %} - {% else %} {{ response_data.po_no }} {%endif %}</span></td>
+                        <td class="label no-right-border" colspan="2">Po No:</td>
+                        <td class="value no-left-border" colspan="3"><span>{% if response_data.po_no == None %} - {% else %} {{ response_data.po_no }} {%endif %}</span></td>
+                        <td class="label no-right-border" colspan="2">DATE:</td>
+                        <td class="value no-left-border" colspan="3">{% if response_data.po_date == None %} - {% else %} {{response_data.po_date }} {% endif %}</td>
                     </tr>
                     <tr>
-                        <td class="label no-right-border">DATE:</td>
-                        <td class="value no-left-border">{% if response_data.po_date == None %} - {% else %} {{ response_data.po_date }} {% endif %}</td>
+                        <td class="label no-right-border" colspan="2">So No:</td>
+                        <td class="value no-left-border" colspan="3"><span>{% if response_data.so_no == None %} - {% else %} {{response_data.so_no }} {%endif %}</span></td>
                     </tr>
+                    <tr>
+                        <td class="label no-right-border" colspan="2">Do No:</td>
+                        <td class="value no-left-border" colspan="3"><span>{% if response_data.dil_no == None %} - {% else %} {{ response_data.dil_no }} {% endif %}</span></td>
+                    </tr>
+
+
                 </table>
             </td>
         </tr>
@@ -111,56 +127,53 @@
             <td>
                 <table class="sub-section">
                     <tr>
-                        <td class="label no-right-border">KIND ATTN:</td>
-                        <td class="value no-left-border">{% if response_data.customer_name == None %} - {% else %} {{ response_data.customer_name }} {%endif %}</span></td>
+                        <td class="label no-right-border">Contact Person:</td>
+                        <td class="value no-left-border">{% if response_data.customer_name == None %} - {% else %} {{response_data.customer_name }} {%endif %}</span></td>
                     </tr>
                     <tr>
-                        <td class="label no-right-border">PHONE NO:</td>
-                        <td class="value no-left-border">{% if response_data.customer_number == None %} - {% else %} {{ response_data.customer_number }} {%endif %}</span></td>
+                        <td class="label no-right-border">Mobile No:</td>
+                        <td class="value no-left-border">{% if response_data.customer_number == None %} - {% else %} {{response_data.customer_number }} {%endif %}</span></td>
                     </tr>
-                    <tr>
-                        <td class="label no-right-border">SO NO:</td>
-                        <td class="value no-left-border"><span>{% if response_data.so_no == None %} - {% else %} {{ response_data.so_no }} {%endif %}</span></td>
-                    </tr>
+
                 </table>
             </td>
         </tr>
         <tr>
             <td>
                 <table class="sub-section">
+
                     <tr>
-                        <td class="label no-right-border">DO No:</td>
-                        <td class="value no-left-border"><span>{% if response_data.dil_no == None %} - {% else %} {{ response_data.dil_no }} {% endif %}</span></td>
+                        <td class="label no-right-border"  colspan="3">Package ID:</td>
+                        <td class="value no-left-border"  colspan="3"><span>{% if response_data.package_id == None %} - {% else %} {{ response_data.package_id }} {%endif %}</span></td>
                     </tr>
                     <tr>
-                        <td class="label no-right-border">Package ID:</td>
-                        <td class="value no-left-border"><span>{% if response_data.package_id == None %} - {% else %} {{ response_data.package_id }} {%endif %}</span></td>
+                        <td class="label no-right-border"  colspan="3">Size:</td>
+                        <td class="value left-border"  colspan="3">{{response_data.box_length}}"x{{response_data.box_breadth}}"x{{response_data.box_height}}"</td>
                     </tr>
                     <tr>
-                        <td class="label no-right-border">Bar Code:</td>
-                        <td class="value no-left-border"><span>{% if response_data.barcode == None %} - {% else %} {{ response_data.barcode }} {% endif %}</span></td>
+                        <td class="label no-right-border"  colspan="3">Box Type:</td>
+                        <td class="value left-border"  colspan="3">{% if response_data.box_type == None %} - {% else %} {{response_data.box_type }} {% endif %}</td>
+                    </tr>
+                    <tr>
+                        <td class="label no-right-border" colspan="2">NT WT:</td>
+                        <td class="value left-border"  colspan="3">{% if response_data.net_weight == None %} - {% else %} {{response_data.net_weight }} Kg {% endif %}</td>
+
+                        <td class="label no-right-border"  colspan="2">GR WT:</td>
+                        <td class="value no-left-border"  colspan="3">{% if response_data.gr_weight == None %} - {% else %} {{response_data.gr_weight }} Kg{% endif %}</td>
+
+                    </tr>
+                    <tr>
+                        <td class="label no-right-border" colspan="3">Box No:</td>
+                        <td class="value no-left-border" colspan="5" style="font-size: 30px"><span>{% if response_data.box_no == None %} - {% else %} {{ response_data.box_no }} {%endif %}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="label no-right-border" colspan="3">Bar Code:</td>
+                        <td class="value no-left-border" colspan="5"><img src="{{ response_data.barcode }}" alt="Barcode"  height="100"></td>
                     </tr>
                 </table>
             </td>
         </tr>
-        <tr>
-            <td>
-                <table class="sub-section">
-                    <tr>
-                        <td class="label no-right-border">Size:</td>
-                        <td class="value left-border">{{response_data.box_height}}x{{response_data.box_length}}x{{response_data.box_breadth}}</td>
-                    </tr>
-                    <tr>
-                        <td class="label no-right-border">NT WT:</td>
-                        <td class="value left-border">{% if response_data.net_weight == None %} - {% else %} {{ response_data.net_weight }} Kg {% endif %}</td>
-                    </tr>
-                    <tr>
-                        <td class="label no-right-border">GR WT:</td>
-                        <td class="value no-left-border">{% if response_data.gr_weight == None %} - {% else %} {{ response_data.gr_weight }} Kg{% endif %}</td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
+
     </table>
     {% endif %}
 </body>
