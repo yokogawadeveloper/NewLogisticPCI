@@ -246,6 +246,12 @@ class DispatchInstructionViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(methods=['get'], detail=False, url_path='dispatch_on_packing_flag')
+    def dispatch_on_packing_flag(self, request):
+        dispatch = DispatchInstruction.objects.filter(only_for_packing_flag=False).order_by('-dil_id')
+        serializer = DispatchInstructionSerializer(dispatch, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class DispatchUnRelatedViewSet(viewsets.ModelViewSet):
     queryset = DispatchInstruction.objects.all()
@@ -257,9 +263,6 @@ class DispatchUnRelatedViewSet(viewsets.ModelViewSet):
         dispatch = DispatchInstruction.objects.filter(only_for_packing_flag=False).order_by('-dil_id')
         serializer = DispatchUnRelatedSerializer(dispatch, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-
 
 
 class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
