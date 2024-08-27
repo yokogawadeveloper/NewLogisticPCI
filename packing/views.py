@@ -271,6 +271,25 @@ class BoxDetailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(methods=['POST'], detail=False, url_path='box_summary_on_dil')
+    def box_summary_on_dil(self, request, pk=None):
+        try:
+            dil_id = request.data['dil_id']
+            box_details = BoxDetails.objects.filter(dil_id=dil_id, main_box=True)
+            box_detail_count = BoxDetails.objects.filter(dil_id=dil_id, main_box=True).count()
+            serializer = UnRelatedBoxDetailsSerializer(box_details, many=True)
+            serialized_data = serializer.data
+            # Add loop_count and box_detail_count to each item in the serialized data
+            for loop_count, item in enumerate(serialized_data, start=1):
+                item['loop_count'] = loop_count
+                item['box_detail_count'] = box_detail_count
+                item['length'] = int(item.pop('length', 0) or 0)
+                item['breadth'] = int(item.pop('breadth', 0) or 0)
+                item['height'] = int(item.pop('height', 0) or 0)
+            return Response({'data': serialized_data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class BoxDetailsFileViewSet(viewsets.ModelViewSet):
     queryset = BoxDetailsFile.objects.all()
@@ -547,7 +566,8 @@ class ItemPackingViewSet(viewsets.ModelViewSet):
                     box_detail_dil = BoxDetails.objects.filter(box_code=box_code).first()  # only for dil
 
                 # Delete related ItemPackingInline records
-                item_packing_ids = ItemPacking.objects.filter(box_code__in=box_code_list).values_list('item_packing_id',flat=True)
+                item_packing_ids = ItemPacking.objects.filter(box_code__in=box_code_list).values_list('item_packing_id',
+                                                                                                      flat=True)
                 item_packing_inline = ItemPackingInline.objects.filter(item_pack_id__in=item_packing_ids)
                 inline_item_list_ids = item_packing_inline.values_list('inline_item_list_id', flat=True)
                 InlineItemList.objects.filter(inline_item_id__in=inline_item_list_ids).update(packed_flag=False)
@@ -568,12 +588,14 @@ class ItemPackingViewSet(viewsets.ModelViewSet):
                     master_item_obj.packing_flag = 2
                     update_list.append(master_item_obj)
                 # Update Master Item and ItemPacking
-                MasterItemList.objects.bulk_update(update_list,['packed_quantity', 'item_status', 'packing_flag', 'item_status_no'])
+                MasterItemList.objects.bulk_update(update_list,
+                                                   ['packed_quantity', 'item_status', 'packing_flag', 'item_status_no'])
                 # ItemPacking.objects.filter(item_packing_id__in=item_packing_ids).delete()
                 # Update dispatch status
                 if box_detail_dil is not None:
                     dil_id = box_detail_dil.dil_id_id
-                    DispatchInstruction.objects.filter(dil_id=dil_id).update(dil_status="Packing In Progress",dil_status_no=10, packed_flag=False)
+                    DispatchInstruction.objects.filter(dil_id=dil_id).update(dil_status="Packing In Progress",
+                                                                             dil_status_no=10, packed_flag=False)
                 return Response({'success': 'Box details successfully deleted'}, status=200)
         except Exception as e:
             transaction.rollback()
@@ -607,7 +629,8 @@ class ItemPackingViewSet(viewsets.ModelViewSet):
                     master_item_obj.item_status_no = 4
                     master_item_obj.packing_flag = 2
                     update_list.append(master_item_obj)
-                    MasterItemList.objects.bulk_update(update_list, ['packed_quantity', 'item_status', 'packing_flag','item_status_no'])
+                    MasterItemList.objects.bulk_update(update_list, ['packed_quantity', 'item_status', 'packing_flag',
+                                                                     'item_status_no'])
                     # Update dispatch status
                     DispatchInstruction.objects.filter(dil_id=dil_id).update(
                         dil_status="Packing In Progress",

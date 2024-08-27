@@ -261,9 +261,9 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                     y_position = draw_wrapped_string(canvas, start_inline_text, y_position,
                                                      item_packing['item_ref_id'].get('linkage_no', ''), 4 * inch)
                     y_position = draw_wrapped_string(canvas, start_inline_text, y_position, "Cust PO  SI No: " + (
-                                item_packing['item_ref_id'].get('customer_po_sl_no', '') or ''), 2 * inch)
+                            item_packing['item_ref_id'].get('customer_po_sl_no', '') or ''), 2 * inch)
                     y_position = draw_wrapped_string(canvas, start_inline_text, y_position, "Cust Part No: " + (
-                                item_packing['item_ref_id'].get('customer_po_item_code', '') or ''), 2 * inch)
+                            item_packing['item_ref_id'].get('customer_po_item_code', '') or ''), 2 * inch)
                     canvas.drawString(6 * inch + x_gap, y_position + 50, str(item_packing.get('item_qty', '')) + " ST")
                     canvas.setFont("Helvetica", 8)
                     y_position -= 20  # Adjust for item packing spacing
@@ -717,9 +717,11 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
         item_serializer_data = item_packing_serializer.data
 
         # Fetch new box details if box_item_flag is true
-        new_box_details = BoxDetails.objects.filter(box_code=data['box_code'], box_item_flag=True).values_list('box_code', flat=True)
+        new_box_details = BoxDetails.objects.filter(box_code=data['box_code'], box_item_flag=True).values_list(
+            'box_code', flat=True)
         new_item_packing_data = ItemPacking.objects.filter(box_code__in=new_box_details)
-        new_item_packing_serializer = ItemPackingSerializer(new_item_packing_data, many=True, context={'request': request})
+        new_item_packing_serializer = ItemPackingSerializer(new_item_packing_data, many=True,
+                                                            context={'request': request})
         new_item_packing_serializer_data = new_item_packing_serializer.data
 
         # Combine item packing data with box details
@@ -876,8 +878,10 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                 draw_wrapped_string(canvas, start_text, y_position, datas['box_no_manual'], 4 * inch)
                 draw_wrapped_string(canvas, start_text, y_position - 10, str(datas['volume']), 4 * inch)
                 canvas.setFont("Helvetica", 7)
-                draw_wrapped_string(canvas, start_text, y_position - 20, "NT W/T:" + str(datas['net_weight']) + "kg",4 * inch)
-                draw_wrapped_string(canvas, start_text, y_position - 30, "GR W/T:" + str(datas['gross_weight']) + "kg",4 * inch)
+                draw_wrapped_string(canvas, start_text, y_position - 20, "NT W/T:" + str(datas['net_weight']) + "kg",
+                                    4 * inch)
+                draw_wrapped_string(canvas, start_text, y_position - 30, "GR W/T:" + str(datas['gross_weight']) + "kg",
+                                    4 * inch)
                 draw_wrapped_string(canvas, start_text, y_position - 40, "Box No:" + str(datas['box_no']), 4 * inch)
                 draw_wrapped_string(canvas, start_text, y_position - 50, "B-Type:" + str(datas['box_type']), 4 * inch)
                 canvas.setFont("Helvetica", 8)
@@ -894,11 +898,17 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
 
                     canvas.setFont("Helvetica", 8)
                     start_inline_text = 2 * inch + x_gap
-                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position,item_packing['item_ref_id'].get('material_description', ''),4 * inch)
-                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position,item_packing['item_ref_id'].get('ms_code', ''), 2 * inch)
-                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position,item_packing['item_ref_id'].get('linkage_no', ''), 4 * inch)
-                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position, "Cust PO  SI No: " + (item_packing['item_ref_id'].get('customer_po_sl_no', '') or ''), 2 * inch)
-                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position, "Cust Part No: " + (item_packing['item_ref_id'].get('customer_po_item_code', '') or ''), 2 * inch)
+                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position,
+                                                     item_packing['item_ref_id'].get('material_description', ''),
+                                                     4 * inch)
+                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position,
+                                                     item_packing['item_ref_id'].get('ms_code', ''), 2 * inch)
+                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position,
+                                                     item_packing['item_ref_id'].get('linkage_no', ''), 4 * inch)
+                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position, "Cust PO  SI No: " + (
+                                item_packing['item_ref_id'].get('customer_po_sl_no', '') or ''), 2 * inch)
+                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position, "Cust Part No: " + (
+                                item_packing['item_ref_id'].get('customer_po_item_code', '') or ''), 2 * inch)
                     canvas.drawString(6 * inch + x_gap, y_position + 50, str(item_packing.get('item_qty', '')) + " ST")
                     canvas.setFont("Helvetica", 8)
                     y_position -= 20  # Adjust for item packing spacing
@@ -931,7 +941,6 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                     canvas.line(inch * 0.5, y_position, width - inch * 0.5, y_position)
                     canvas.setDash()
                     y_position -= 20  # Adjust for dash line spacing
-
 
             return y_position, page_number
 
@@ -1649,7 +1658,7 @@ class CustomerDocumentsDetailsViewSet(viewsets.ModelViewSet):
             if box_details.box_code:
                 number = "box-da_2-5998"
                 my_code = Code128(number, writer=ImageWriter())
-                my_code.write(barcode_buffer,options={"write_text": False})
+                my_code.write(barcode_buffer, options={"write_text": False})
                 barcode_image = Image.open(barcode_buffer)
                 barcode_buffer.seek(0)
 
@@ -1694,6 +1703,40 @@ class CustomerDocumentsDetailsViewSet(viewsets.ModelViewSet):
                 if not os.path.exists(media_path):
                     os.makedirs(media_path)
                 file_path = os.path.join(media_path, "customer_details_{0}.pdf".format(dispatch.dil_no))
+                with open(file_path, "wb") as file:
+                    file.write(response.getvalue())
+                return response
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['POST'], detail=False, url_path='box_summary_pdf')
+    def box_summary_pdf(self, request, pk=None):
+        try:
+            dil_id = request.data['dil_id']
+            box_details = BoxDetails.objects.filter(dil_id=dil_id, main_box=True)
+            box_detail_count = BoxDetails.objects.filter(dil_id=dil_id, main_box=True).count()
+            serializer = UnRelatedBoxDetailsSerializer(box_details, many=True)
+            serialized_data = serializer.data
+            # Add loop_count and box_detail_count to each item in the serialized data
+            for loop_count, item in enumerate(serialized_data, start=1):
+                item['loop_count'] = loop_count
+                item['box_detail_count'] = box_detail_count
+                item['length'] = int(item.pop('length', 0) or 0)
+                item['breadth'] = int(item.pop('breadth', 0) or 0)
+                item['height'] = int(item.pop('height', 0) or 0)
+            # Create PDF logic
+            html_template = get_template('box_summary.html')
+            html = html_template.render({'response_data': serialized_data})
+            result = BytesIO()
+            pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
+            if not pdf.err:
+                response = HttpResponse(result.getvalue(), content_type='application/pdf')
+                response['Content-Disposition'] = 'attachment; filename="box_summary.pdf"'
+                # Save the file
+                media_path = os.path.join(settings.MEDIA_ROOT, "documents")
+                if not os.path.exists(media_path):
+                    os.makedirs(media_path)
+                file_path = os.path.join(media_path, "box_summary_{0}.pdf".format(dil_id))
                 with open(file_path, "wb") as file:
                     file.write(response.getvalue())
                 return response

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <style type="text/css">
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: #eeeeee;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333333;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+
+        }
+
+        th {
+            background-color: #0f1a95;
+            /* Blue color */
+            color: #ffffff;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        footer {
+            padding: 10px 0;
+            text-align: center;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>Box No</th>
+                <th>Size</th>
+                <th>Net WT</th>
+                <th>GR WT</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in response_data %}
+            <tr>
+                <td>{{data.loop_count}}/{{data.box_detail_count}}</td>
+                <td>{{data.length}}"x{{data.breadth}}"x{{data.height}}"</td>
+                <td>{% if data.net_weight == None %} - {% else %} {{data.net_weight}} kg {% endif %}</td>
+                <td>{% if data.gross_weight == None %} - {% else %} {{data.gross_weight}} kg {% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+</body>
+
+</html>

@@ -65,6 +65,12 @@ class BoxDetailSerializer(serializers.ModelSerializer):
         return super(BoxDetailSerializer, self).update(instance=instance, validated_data=validated_data)
 
 
+class UnRelatedBoxDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BoxDetails
+        fields = '__all__'
+
+
 class BoxDetailsFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = BoxDetailsFile
