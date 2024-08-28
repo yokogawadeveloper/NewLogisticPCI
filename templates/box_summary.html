@@ -16,40 +16,62 @@
             color: #333333;
         }
 
-        table {
+        .no-border th,
+        .no-border td {
+            border: none;
+        }
+
+        with-border {
             border-collapse: collapse;
             width: 100%;
             margin-bottom: 20px;
         }
 
-        th,
-        td {
+        .with-border th,
+        .with-border td {
             border: 1px solid black;
             padding: 8px;
-            text-align: left;
-
-        }
-
-        th {
-            background-color: #0f1a95;
-            /* Blue color */
-            color: #ffffff;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-
-        footer {
-            padding: 10px 0;
             text-align: center;
-            width: 100%;
         }
     </style>
 </head>
 
 <body>
-    <table>
+    <table class="no-border">
+        <thead>
+            <tr>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="10">
+                    <h3 style="text-align: center;">Packing Summary</h3>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="5" style="font-weight: bold;">So No:{% if response_data.so_no == None %} - {% else %} {{response_data.so_no}} {% endif %}</td>
+                <td colspan="3"></td>
+                <td colspan="2" style="font-weight: bold;">Po No:{% if response_data.po_no == None %} - {% else %} {{response_data.po_no}} {% endif %}</td>
+            </tr>
+            <tr>
+                <td colspan="5" style="font-weight: bold;">Do No:{% if response_data.do_no == None %} - {% else %} {{response_data.do_no}} {% endif %}</td>
+                <td colspan="3"></td>
+                <td colspan="2" style="font-weight: bold;">Do Date:{% if response_data.do_date == None %} - {% else %} {{response_data.do_date |date:'Y-m-d'}} {% endif %}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="with-border">
         <thead>
             <tr>
                 <th>Box No</th>
@@ -59,7 +81,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for data in response_data %}
+            {% for data in response_data.box_details %}
             <tr>
                 <td>{{data.loop_count}}/{{data.box_detail_count}}</td>
                 <td>{{data.length}}"x{{data.breadth}}"x{{data.height}}"</td>
@@ -67,9 +89,14 @@
                 <td>{% if data.gross_weight == None %} - {% else %} {{data.gross_weight}} kg {% endif %}</td>
             </tr>
             {% endfor %}
+            <tr>
+                <td colspan="2" style="text-align: end;">Total</td>
+                <td>{% if response_data.total_net == None %} - {% else %} {{response_data.total_net}} kgs {% endif %}</td>
+                <td>{% if response_data.total_gross == None %} - {% else %} {{response_data.total_gross}} kgs {% endif %}</td>
+            </tr>
         </tbody>
-
     </table>
+
 </body>
 
 </html>

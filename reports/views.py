@@ -906,9 +906,9 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                     y_position = draw_wrapped_string(canvas, start_inline_text, y_position,
                                                      item_packing['item_ref_id'].get('linkage_no', ''), 4 * inch)
                     y_position = draw_wrapped_string(canvas, start_inline_text, y_position, "Cust PO  SI No: " + (
-                                item_packing['item_ref_id'].get('customer_po_sl_no', '') or ''), 2 * inch)
+                            item_packing['item_ref_id'].get('customer_po_sl_no', '') or ''), 2 * inch)
                     y_position = draw_wrapped_string(canvas, start_inline_text, y_position, "Cust Part No: " + (
-                                item_packing['item_ref_id'].get('customer_po_item_code', '') or ''), 2 * inch)
+                            item_packing['item_ref_id'].get('customer_po_item_code', '') or ''), 2 * inch)
                     canvas.drawString(6 * inch + x_gap, y_position + 50, str(item_packing.get('item_qty', '')) + " ST")
                     canvas.setFont("Helvetica", 8)
                     y_position -= 20  # Adjust for item packing spacing
@@ -1714,7 +1714,14 @@ class CustomerDocumentsDetailsViewSet(viewsets.ModelViewSet):
         try:
             dil_id = request.data['dil_id']
             box_details = BoxDetails.objects.filter(dil_id=dil_id, main_box=True)
+            dispatch = DispatchInstruction.objects.get(dil_id=dil_id)
+            # other calculation
             box_detail_count = BoxDetails.objects.filter(dil_id=dil_id, main_box=True).count()
+            total_net = BoxDetails.objects.filter(dil_id=dil_id, main_box=True).aggregate(net_weight=Sum('net_weight'))[
+                'net_weight']
+            total_gross = \
+            BoxDetails.objects.filter(dil_id=dil_id, main_box=True).aggregate(gross_weight=Sum('gross_weight'))[
+                'gross_weight']
             serializer = UnRelatedBoxDetailsSerializer(box_details, many=True)
             serialized_data = serializer.data
             # Add loop_count and box_detail_count to each item in the serialized data
@@ -1724,9 +1731,19 @@ class CustomerDocumentsDetailsViewSet(viewsets.ModelViewSet):
                 item['length'] = int(item.pop('length', 0) or 0)
                 item['breadth'] = int(item.pop('breadth', 0) or 0)
                 item['height'] = int(item.pop('height', 0) or 0)
+
+            response_data = {
+                'po_no': dispatch.po_no,
+                'so_no': dispatch.so_no,
+                'do_no': dispatch.dil_no,
+                'do_date': dispatch.dil_date,
+                'total_net': total_net,
+                'total_gross': total_gross,
+                'box_details': serialized_data
+            }
             # Create PDF logic
             html_template = get_template('box_summary.html')
-            html = html_template.render({'response_data': serialized_data})
+            html = html_template.render({'response_data': response_data})
             result = BytesIO()
             pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
             if not pdf.err:
