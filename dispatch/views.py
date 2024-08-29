@@ -1185,15 +1185,43 @@ class InlineItemListViewSet(viewsets.ModelViewSet):
         try:
             data = request.data
             master_item_id = data['master_item_id']
-            serial_no = data['serial_no']
-            tag_no = data['tag_no']
-            inline_item = InlineItemList.objects.filter(master_item_id=master_item_id).order_by('inline_item_id')
-            for item in inline_item:
-                if item.serial_no is None and item.tag_no is None:
-                    item.serial_no = serial_no
-                    item.tag_no = tag_no
-                    item.save()
-                    break
+            inline_list = data['inline_list']
+
+            for item_data in inline_list:
+                if item_data.get('inline_item_id'):
+                    inline_item = InlineItemList.objects.filter(inline_item_id=item_data['inline_item_id']).first()
+                    if inline_item:
+                        inline_item.serial_no = item_data['serial_no']
+                        inline_item.tag_no = item_data['tag_no']
+                        inline_item.range_max = item_data['range_max']
+                        inline_item.range_min = item_data['range_min']
+                        inline_item.range_output = item_data['range_output']
+                        inline_item.range_unit = item_data['range_unit']
+                        inline_item.scale_max = item_data['scale_max']
+                        inline_item.scale_min = item_data['scale_min']
+                        inline_item.scale_output = item_data['scale_output']
+                        inline_item.scale_unit = item_data['scale_unit']
+                        inline_item.quantity = 1
+                        inline_item.created_by = request.user
+                        inline_item.updated_by = request.user
+                        inline_item.save()
+                else:
+                    InlineItemList.objects.create(
+                        master_item_id=master_item_id,
+                        serial_no=item_data['serial_no'],
+                        tag_no=item_data['tag_no'],
+                        range_max=item_data['range_max'],
+                        range_min=item_data['range_min'],
+                        range_output=item_data['range_output'],
+                        range_unit=item_data['range_unit'],
+                        scale_max=item_data['scale_max'],
+                        scale_min=item_data['scale_min'],
+                        scale_output=item_data['scale_output'],
+                        scale_unit=item_data['scale_unit'],
+                        quantity = 1,
+                        created_by=request.user
+                    )
+
             return Response({'message': 'Inline Item Updated!'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
