@@ -566,8 +566,7 @@ class ItemPackingViewSet(viewsets.ModelViewSet):
                     box_detail_dil = BoxDetails.objects.filter(box_code=box_code).first()  # only for dil
 
                 # Delete related ItemPackingInline records
-                item_packing_ids = ItemPacking.objects.filter(box_code__in=box_code_list).values_list('item_packing_id',
-                                                                                                      flat=True)
+                item_packing_ids = ItemPacking.objects.filter(box_code__in=box_code_list).values_list('item_packing_id',flat=True)
                 item_packing_inline = ItemPackingInline.objects.filter(item_pack_id__in=item_packing_ids)
                 inline_item_list_ids = item_packing_inline.values_list('inline_item_list_id', flat=True)
                 InlineItemList.objects.filter(inline_item_id__in=inline_item_list_ids).update(packed_flag=False)
@@ -588,14 +587,12 @@ class ItemPackingViewSet(viewsets.ModelViewSet):
                     master_item_obj.packing_flag = 2
                     update_list.append(master_item_obj)
                 # Update Master Item and ItemPacking
-                MasterItemList.objects.bulk_update(update_list,
-                                                   ['packed_quantity', 'item_status', 'packing_flag', 'item_status_no'])
-                # ItemPacking.objects.filter(item_packing_id__in=item_packing_ids).delete()
+                MasterItemList.objects.bulk_update(update_list,['packed_quantity', 'item_status', 'packing_flag', 'item_status_no'])
+                ItemPacking.objects.filter(item_packing_id__in=item_packing_ids).delete()
                 # Update dispatch status
                 if box_detail_dil is not None:
                     dil_id = box_detail_dil.dil_id_id
-                    DispatchInstruction.objects.filter(dil_id=dil_id).update(dil_status="Packing In Progress",
-                                                                             dil_status_no=10, packed_flag=False)
+                    DispatchInstruction.objects.filter(dil_id=dil_id).update(dil_status="Packing In Progress",dil_status_no=10, packed_flag=False)
                 return Response({'success': 'Box details successfully deleted'}, status=200)
         except Exception as e:
             transaction.rollback()
