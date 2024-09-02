@@ -570,11 +570,6 @@ class ItemPackingViewSet(viewsets.ModelViewSet):
                 item_packing_inline = ItemPackingInline.objects.filter(item_pack_id__in=item_packing_ids)
                 inline_item_list_ids = item_packing_inline.values_list('inline_item_list_id', flat=True)
                 InlineItemList.objects.filter(inline_item_id__in=inline_item_list_ids).update(packed_flag=False)
-
-                # Delete ItemPacking records
-                # item_packing_inline.delete()
-                # BoxDetails.objects.filter(box_code__in=box_code_list).delete()
-
                 # Update MasterItemList and DispatchInstruction statuses
                 update_list = []
                 for item_packing_id in item_packing_ids:
@@ -593,6 +588,10 @@ class ItemPackingViewSet(viewsets.ModelViewSet):
                 if box_detail_dil is not None:
                     dil_id = box_detail_dil.dil_id_id
                     DispatchInstruction.objects.filter(dil_id=dil_id).update(dil_status="Packing In Progress",dil_status_no=10, packed_flag=False)
+
+                # Delete ItemPacking records
+                item_packing_inline.delete()
+                BoxDetails.objects.filter(box_code__in=box_code_list).delete()
                 return Response({'success': 'Box details successfully deleted'}, status=200)
         except Exception as e:
             transaction.rollback()
