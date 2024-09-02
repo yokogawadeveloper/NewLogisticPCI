@@ -572,8 +572,8 @@ class ItemPackingViewSet(viewsets.ModelViewSet):
                 InlineItemList.objects.filter(inline_item_id__in=inline_item_list_ids).update(packed_flag=False)
 
                 # Delete ItemPacking records
-                item_packing_inline.delete()
-                BoxDetails.objects.filter(box_code__in=box_code_list).delete()
+                # item_packing_inline.delete()
+                # BoxDetails.objects.filter(box_code__in=box_code_list).delete()
 
                 # Update MasterItemList and DispatchInstruction statuses
                 update_list = []
