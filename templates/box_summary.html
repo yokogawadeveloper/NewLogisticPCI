@@ -55,16 +55,18 @@
         <tbody>
             <tr>
                 <td colspan="10">
-                    <h3 style="text-align: center;">Packing Summary</h3>
+                    <h3 style="text-align: center;font-size: 18px">Packing Summary</h3>
                 </td>
             </tr>
             <tr>
                 <td colspan="5" style="font-weight: bold;">So No:{% if response_data.so_no == None %} - {% else %} {{response_data.so_no}} {% endif %}</td>
                 <td colspan="3"></td>
-                <td colspan="2" style="font-weight: bold;">Po No:{% if response_data.po_no == None %} - {% else %} {{response_data.po_no}} {% endif %}</td>
+                <td colspan="2" style="font-weight: bold;">Do No:{% if response_data.do_no == None %} - {% else %} {{response_data.do_no}} {% endif %}</td>
+            
             </tr>
             <tr>
-                <td colspan="5" style="font-weight: bold;">Do No:{% if response_data.do_no == None %} - {% else %} {{response_data.do_no}} {% endif %}</td>
+                <td colspan="5" style="font-weight: bold;">Po No:{% if response_data.po_no == None %} - {% else %} {{response_data.po_no}} {% endif %}</td>
+            
                 <td colspan="3"></td>
                 <td colspan="2" style="font-weight: bold;">Do Date:{% if response_data.do_date == None %} - {% else %} {{response_data.do_date |date:'Y-m-d'}} {% endif %}</td>
             </tr>
@@ -90,9 +92,9 @@
             </tr>
             {% endfor %}
             <tr>
-                <td colspan="2" style="text-align: end;">Total</td>
-                <td>{% if response_data.total_net == None %} - {% else %} {{response_data.total_net}} kgs {% endif %}</td>
-                <td>{% if response_data.total_gross == None %} - {% else %} {{response_data.total_gross}} kgs {% endif %}</td>
+                <td colspan="2" style="text-align: right;font-weight: bold;">Total</td>
+                <td style="font-weight: bold;"> {% if response_data.total_net == None %} - {% else %} {{response_data.total_net}} kgs {% endif %}</td>
+                <td style="font-weight: bold;">{% if response_data.total_gross == None %} - {% else %} {{response_data.total_gross}} kgs {% endif %}</td>
             </tr>
         </tbody>
     </table>

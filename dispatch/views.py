@@ -976,9 +976,7 @@ class MasterItemBatchViewSet(viewsets.ModelViewSet):
 
                     # Join the formatted_output
                     data['serial_range'] = ", ".join(formatted_output)
-
             return Response(serialized_data)
-
         except Exception as e:
             return Response({'message': str(e), 'status': status.HTTP_400_BAD_REQUEST})
 
@@ -1079,6 +1077,7 @@ class MasterItemBatchViewSet(viewsets.ModelViewSet):
                         inline_data['merge_row'] = merge_row
                         inline_data['inline_serial_no'] = inline_item['serial_no']
                         inline_data['inline_tag_no'] = inline_item['tag_no']
+                        inline_data['quantity'] = inline_item['quantity']
                         response_data.append(inline_data)
                 else:
                     inline_data = master_item

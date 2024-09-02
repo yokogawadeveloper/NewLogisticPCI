@@ -10,6 +10,7 @@ from workflow.views import *
 from tracking.views import *
 from tracking.mediators import *
 from reports.views import *
+from reports.analytics import *
 
 # Add routers here.
 
@@ -87,3 +88,7 @@ router.register('customer_consignee_export', CustomerConsigneeExport, basename='
 router.register('dc_invoice_details_report', DCInvoiceDetailsReportViewSet, basename='dc_invoice_details_report')
 router.register('item_packing_report', ItemPackingReportViewSet, basename='item_packing_report')
 router.register('customer_details_pdf', CustomerDocumentsDetailsViewSet, basename='customer_details_pdf')
+
+# ----------------------------- Monitoring ------------------------------------------- #
+router.register('monthly_monitor', MonthlyMonitoringViewSet, basename='monthly_monitor')
+
