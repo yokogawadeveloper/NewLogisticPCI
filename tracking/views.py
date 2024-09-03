@@ -400,15 +400,15 @@ class TruckListViewSet(viewsets.ModelViewSet):
             date_flag = request.data['date_flag']
             date_from = request.data['date_from']
             date_to = request.data['date_to']
+            # Base queryset with filtering and ordering
             if date_flag:
-                truck_list = TruckList.objects.filter(created_at__range=[date_from, date_to], **filter_data)
+                truck_list = TruckList.objects.filter(created_at__range=[date_from, date_to], **filter_data).order_by('-created_at')
             else:
-                truck_list = TruckList.objects.filter(**filter_data)
+                truck_list = TruckList.objects.filter(**filter_data).order_by('-created_at')
 
             serializer = TruckListSerializer(truck_list, many=True)
             for data in serializer.data:
-                dispatch_ids = TruckLoadingDetails.objects.filter(truck_list_id=data['id']).values_list('dil_id',
-                                                                                                        flat=True)
+                dispatch_ids = TruckLoadingDetails.objects.filter(truck_list_id=data['id']).values_list('dil_id',flat=True)
                 dispatch = DispatchInstruction.objects.filter(dil_id__in=dispatch_ids).distinct()
                 dispatch_serializer = DispatchInstructionSerializer(dispatch, many=True)
 
@@ -1145,21 +1145,18 @@ class GatePassTruckDetailsViewSet(viewsets.ModelViewSet):
     def dynamic_filter_gate_pass_truck_details(self, request, *args, **kwargs):
         try:
             data = request.data
-            gate_pass_info = GatePassInfo.objects.filter(**data, is_active=True)
+            gate_pass_info = GatePassInfo.objects.filter(**data, is_active=True).order_by('-created_at')
             gate_pass_info_serializer = GatePassInfoSerializer(gate_pass_info, many=True)
             for gate_pass_info_data in gate_pass_info_serializer.data:
                 gate_pass_info_id = gate_pass_info_data['id']
-                truck_ids = GatePassTruckDetails.objects.filter(gate_info=gate_pass_info_id).values_list('truck_info',
-                                                                                                         flat=True)
+                truck_ids = GatePassTruckDetails.objects.filter(gate_info=gate_pass_info_id).values_list('truck_info',flat=True)
                 # Aggregate the sum of the number of boxes for the retrieved truck IDs
-                sum_of_no_of_boxes = \
-                    TruckList.objects.filter(id__in=truck_ids).aggregate(total_boxes=Sum('no_of_boxes'))['total_boxes']
+                sum_of_no_of_boxes = TruckList.objects.filter(id__in=truck_ids).aggregate(total_boxes=Sum('no_of_boxes'))['total_boxes']
                 truck_data = TruckList.objects.filter(id__in=truck_ids)
                 truck_serializer = TruckListSerializer(truck_data, many=True)
                 truck_serializer_data = truck_serializer.data
                 for truck_data in truck_serializer_data:
-                    dispatch_ids = TruckLoadingDetails.objects.filter(truck_list_id=truck_data['id']).values_list(
-                        'dil_id', flat=True)
+                    dispatch_ids = TruckLoadingDetails.objects.filter(truck_list_id=truck_data['id']).values_list('dil_id', flat=True)
                     dispatch = DispatchInstruction.objects.filter(dil_id__in=dispatch_ids).distinct()
                     dispatch_serializer = DispatchInstructionSerializer(dispatch, many=True)
 
