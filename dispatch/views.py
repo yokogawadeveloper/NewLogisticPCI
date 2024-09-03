@@ -255,10 +255,32 @@ class DispatchInstructionViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], detail=False, url_path='get_dil_by_da_allocation')
     def get_dil_by_da_allocation(self, request):
         try:
-            dil_ids = DAUserRequestAllocation.objects.filter(emp_id=request.user).values_list('dil_id', flat=True)
-            filter_data = DispatchInstruction.objects.filter(dil_id__in=dil_ids).order_by('-dil_id')
-            serializer = DispatchInstructionSerializer(filter_data, many=True)
-            return Response(serializer.data)
+            filter_data = request.data.get('data_filter', {})
+            date_type = request.data.get('date_type', None)
+            date_flag = request.data.get('date_flag', False)
+            date_from = request.data.get('date_from', None)
+            date_to = request.data.get('date_to', None)
+
+            # Fetch allocation DIL IDs for the current user
+            allocation_dil_ids = DAUserRequestAllocation.objects.filter(emp_id=request.user).values_list('dil_id',flat=True)
+
+            # If no allocation DIL IDs are found, return an empty response
+            if not allocation_dil_ids:
+                return Response([], status=status.HTTP_204_NO_CONTENT)
+
+            # Apply the filters based on date and other criteria
+            if date_flag and date_type:
+                type_filter = date_type + '__range'
+                dispatch = DispatchInstruction.objects.filter(**filter_data, **{type_filter: [date_from, date_to]})
+            else:
+                dispatch = DispatchInstruction.objects.filter(**filter_data)
+
+            # Further filter based on allocation DIL IDs
+            dispatch = dispatch.filter(dil_id__in=allocation_dil_ids)
+
+            # Serialize the results
+            serializer = DispatchInstructionSerializer(dispatch, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
