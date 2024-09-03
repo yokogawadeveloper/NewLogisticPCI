@@ -252,6 +252,16 @@ class DispatchInstructionViewSet(viewsets.ModelViewSet):
         serializer = DispatchInstructionSerializer(dispatch, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(methods=['post'], detail=False, url_path='get_dil_by_da_allocation')
+    def get_dil_by_da_allocation(self, request):
+        try:
+            dil_ids = DAUserRequestAllocation.objects.filter(emp_id=request.user).values_list('dil_id', flat=True)
+            filter_data = DispatchInstruction.objects.filter(dil_id__in=dil_ids).order_by('-dil_id')
+            serializer = DispatchInstructionSerializer(filter_data, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class DispatchUnRelatedViewSet(viewsets.ModelViewSet):
     queryset = DispatchInstruction.objects.all()
@@ -1217,7 +1227,7 @@ class InlineItemListViewSet(viewsets.ModelViewSet):
                         scale_min=item_data['scale_min'],
                         scale_output=item_data['scale_output'],
                         scale_unit=item_data['scale_unit'],
-                        quantity = 1,
+                        quantity=1,
                         created_by=request.user
                     )
 
