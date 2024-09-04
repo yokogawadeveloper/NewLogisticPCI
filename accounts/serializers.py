@@ -4,6 +4,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from django.core.validators import EmailValidator
 from django.core.exceptions import ValidationError
+from .models import EmployeeUser
 
 User = get_user_model()
 
@@ -67,3 +68,9 @@ class EmployeeTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         return token
+
+
+class UpdateEmployeeUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeUser
+        fields = ['username', 'pic']  # Include other fields as needed

@@ -17,6 +17,7 @@ from reports.analytics import *
 router = routers.DefaultRouter()
 # ----------------------------- Accounts ------------------------------------------- #
 router.register('employee_user', EmployeeUserViewSet, basename='employee_user')
+router.register('update_user', UpdateEmployeeUserViewSet, basename='update_user')
 router.register('sub_department', SubDepartmentViewSet, basename='sub_department')
 # ----------------------------- DispatchInstruction ------------------------------------------- #
 router.register('dispatch_instruction', DispatchInstructionViewSet, basename='dispatch_instruction')

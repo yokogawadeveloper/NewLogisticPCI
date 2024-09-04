@@ -54,6 +54,8 @@ class EmployeeUserManager(BaseUserManager):
 
 
 class EmployeeUser(AbstractBaseUser, PermissionsMixin):
+    def profile_image_path(instance, filename):
+        return f'profile/{instance.username}/{filename}'
     username = models.CharField(max_length=100, unique=True)
     first_name = models.CharField(max_length=100, null=True, blank=True)
     last_name = models.CharField(max_length=100, null=True, blank=True)
@@ -63,6 +65,7 @@ class EmployeeUser(AbstractBaseUser, PermissionsMixin):
     designation = models.CharField(max_length=100, null=True, blank=True)
     department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True, blank=True)
     sub_department = models.ForeignKey(SubDepartment, on_delete=models.CASCADE, null=True, blank=True)
+    pic = models.ImageField(upload_to=profile_image_path, null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

@@ -1,21 +1,45 @@
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.decorators import action
 from rest_framework import status, generics
 from rest_framework import viewsets, permissions
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
-from rest_framework_simplejwt.views import TokenObtainPairView
 from datetime import timedelta
 from .models import ActiveUser
 from .decorators import *
 from .serializers import *
 from master.models import *
 
-
 User = get_user_model()
 
 
 # Create view here.
+class SubDepartmentViewSet(viewsets.ModelViewSet):
+    queryset = SubDepartment.objects.all()
+    serializer_class = SubDepartmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        query_set = self.queryset.filter()
+        return query_set
+
+    def list(self, request, *args, **kwargs):
+        query_set = self.get_queryset()
+        serializer = self.serializer_class(query_set, many=True, context={'request': request})
+        serializer_data = serializer.data
+        return Response(serializer_data)
+
+
+class ActiveUserCountView(APIView):
+    def get(self, request):
+        now = timezone.now()
+        time_threshold = now - timedelta(minutes=5)
+        active_users_count = ActiveUser.objects.filter(last_activity__gte=time_threshold).count()
+        return Response({'active_users_count': active_users_count})
+
+
 class RegisterView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
 
@@ -81,7 +105,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class EmployeeUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = EmployeeUserSerializer
-    # permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         query_set = self.queryset.filter(is_active=True)
@@ -94,25 +117,20 @@ class EmployeeUserViewSet(viewsets.ModelViewSet):
         return Response(serializer_data)
 
 
-class SubDepartmentViewSet(viewsets.ModelViewSet):
-    queryset = SubDepartment.objects.all()
-    serializer_class = SubDepartmentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class UpdateEmployeeUserViewSet(viewsets.ModelViewSet):
+    queryset = EmployeeUser.objects.all()
+    serializer_class = UpdateEmployeeUserSerializer
 
-    def get_queryset(self):
-        query_set = self.queryset.filter()
-        return query_set
-
-    def list(self, request, *args, **kwargs):
-        query_set = self.get_queryset()
-        serializer = self.serializer_class(query_set, many=True, context={'request': request})
-        serializer_data = serializer.data
-        return Response(serializer_data)
-
-
-class ActiveUserCountView(APIView):
-    def get(self, request):
-        now = timezone.now()
-        time_threshold = now - timedelta(minutes=5)
-        active_users_count = ActiveUser.objects.filter(last_activity__gte=time_threshold).count()
-        return Response({'active_users_count': active_users_count})
+    @action(detail=False, methods=['post'], url_path='update_pic/(?P<pk>\d+)')
+    def update_pic(self, request, pk=None):
+        try:
+            user = self.get_queryset().get(pk=pk)
+        except EmployeeUser.DoesNotExist:
+            return Response({'detail': 'Employee Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            if 'pic' in request.FILES:
+                user.pic = request.FILES['pic']
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
