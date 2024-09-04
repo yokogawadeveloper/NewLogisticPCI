@@ -15,7 +15,9 @@ import more_itertools as mit
 from .frames import column_mapping
 from .utils import send_email
 from workflow.models import *
-from subordinate.models import CustomerDetails
+from subordinate.models import *
+from packing.models import BoxDetails
+from tracking.models import DCInvoiceDetails
 from .serializers import *
 import pandas as pd
 import pyodbc
@@ -277,9 +279,10 @@ class DispatchInstructionViewSet(viewsets.ModelViewSet):
 
             # Further filter based on allocation DIL IDs
             dispatch = dispatch.filter(dil_id__in=allocation_dil_ids)
-
-            # Serialize the results
             serializer = DispatchInstructionSerializer(dispatch, many=True)
+            for data in serializer.data:
+                data['packing_cost'] = BoxDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('price'))['total']
+                data['billing_value'] = DCInvoiceDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('bill_amount'))['total']
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

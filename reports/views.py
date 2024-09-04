@@ -1354,12 +1354,8 @@ class DispatchReportViewSet(viewsets.ModelViewSet):
             serializer = DispatchInstructionSerializer(truck_request, many=True)
             for data in serializer.data:
                 data['no_of_boxes'] = BoxDetails.objects.filter(dil_id=data['dil_id'], main_box=True).count()
-                data['packing_cost'] = BoxDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('price'))[
-                    'total']
-                data['billing_value'] = \
-                    DispatchBillDetails.objects.filter(dil_id=data['dil_id']).aggregate(
-                        total=Sum('total_amount_with_tax'))[
-                        'total']
+                data['packing_cost'] = BoxDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('price'))['total']
+                data['billing_value'] = DCInvoiceDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('bill_amount'))['total']
                 data['sap_invoice_amount'] = 0
                 data['transportation_cost'] = 0
             return Response(serializer.data, status=status.HTTP_200_OK)
