@@ -747,7 +747,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
             canvas.setFont("Helvetica-Bold", 12)
             logo_path = os.path.join(settings.MEDIA_ROOT, "images", "yokogawa_logo.jpg")
             canvas.drawImage(logo_path, line_start_x, height - margin_top - 30, width=150, height=30)
-            canvas.drawString(6 * inch, height - margin_top - 15, "Packing List")
+            canvas.drawString(3.3 * inch, height - margin_top - 15, "Packing List")
             canvas.setFont("Helvetica", 9)
 
             company_info = [
@@ -1083,6 +1083,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
             response_data.append(box_data_entry)  # Append to response_data
 
         response = response_data
+        return Response(response)
         # PDF Creation main logic
         buffer = BytesIO()
         p = canvas.Canvas(buffer, pagesize=A4)
@@ -1096,7 +1097,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
             canvas.setFont("Helvetica-Bold", 12)
             logo_path = os.path.join(settings.MEDIA_ROOT, "images", "yokogawa_logo.jpg")
             canvas.drawImage(logo_path, line_start_x, height - margin_top - 30, width=150, height=30)
-            canvas.drawString(6 * inch, height - margin_top - 15, "Packing List")
+            canvas.drawString(3.3 * inch, height - margin_top - 15, "Packing List")
             canvas.setFont("Helvetica", 9)
 
             company_info = [
@@ -1310,7 +1311,6 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
             draw_header(p, page_number, 0)  # Total pages is 0 for now
             y_position = height - 3 * inch
             y_position, page_number = draw_content(p, y_position, page_number, 0)
-            # draw_footer(p, page_number, total_pages)
 
         # Finalize the PDF creation
         p.showPage()
@@ -1327,6 +1327,257 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
         # Send the PDF to the client
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="dispatch_packing_summary_{dispatch.dil_id}.pdf"'
+        buffer.seek(0)
+        response.write(buffer.getvalue())
+        return response
+
+    @action(detail=False, methods=['post'], url_path="master_item_pdf_with_dispatch")
+    def master_item_pdf_with_dispatch(self, request):
+        data = request.data
+        response_data = []
+        dispatch = DispatchInstruction.objects.get(dil_id=data['dil_id'])
+        dispatch_ids = DispatchInstruction.objects.filter(dil_id=data['dil_id']).values_list('dil_id', flat=True)
+        master_items = MasterItemList.objects.filter(dil_id__in=dispatch_ids)
+        serializer = MasterItemListReportSerializer(master_items, many=True)
+        response_data.append({
+            'net_weight': '',
+            'master_items': serializer.data,
+        })
+        # PDF Creation main logic
+        # return Response(response_data)
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+        x_gap = 10  # Define the gap for x-axis
+
+        def draw_header(canvas, page_number, total_pages):
+            margin_top = 20  # 20px top margin
+            line_start_x = inch * 0.5  # Start of the line on the x-axis
+
+            canvas.setFont("Helvetica-Bold", 12)
+            logo_path = os.path.join(settings.MEDIA_ROOT, "images", "yokogawa_logo.jpg")
+            canvas.drawImage(logo_path, line_start_x, height - margin_top - 30, width=150, height=30)
+            canvas.drawString(3.3 * inch, height - margin_top - 15, "Delivery Instruction List")
+            canvas.setFont("Helvetica", 9)
+
+            company_info = [
+                "Yokogawa India Limited",
+                "Plot No.96, Electronic City Complex, Hosur Road",
+                "Bangalore-560100, India",
+                "State Name & Code: Karnataka-29 India",
+                "Phone:  +91(080) 41586000",
+            ]
+            text_object = canvas.beginText(line_start_x, height - margin_top - 45)
+            for line in company_info:
+                text_object.textLine(line)
+            canvas.drawText(text_object)
+
+            po_no = dispatch.po_no.split()[0] if dispatch.po_no else 'N/A'
+            doc_info = [
+                f"DO No: {dispatch.dil_no}",
+                f"DO Date: {dispatch.dil_date}",
+                f"SO No: {dispatch.so_no}",
+                f"PO No: {po_no}",
+            ]
+            text_object = canvas.beginText(6 * inch, height - margin_top - 45)
+            for line in doc_info:
+                text_object.textLine(line)
+            canvas.drawText(text_object)
+
+            # Line under the header section
+            y_position_after_line = height - margin_top - 100
+            canvas.line(line_start_x, y_position_after_line, width - inch * 0.5, y_position_after_line)
+
+            page_no_info = f"Page {page_number} of {total_pages}"
+            canvas.drawString(6 * inch, y_position_after_line + 15, page_no_info)
+
+        def shipment_header(canvas, y_position):
+            canvas.setFont("Helvetica", 7)
+
+            ship_to = []
+            ship_to.append(dispatch.ship_to_party_name)
+            ship_to.append(dispatch.ship_to_address)
+            ship_to.append(dispatch.ship_to_city)
+            ship_to.append(dispatch.ship_to_postal_code)
+            ship_to.append(dispatch.ship_to_country)
+
+            canvas.setFont("Helvetica-Bold", 9)
+            canvas.drawString(inch * 0.5, y_position + 15, "SHIP TO")
+            canvas.setFont("Helvetica", 7)
+            text_object = canvas.beginText(inch * 0.5, y_position)
+            for line in ship_to:
+                text_object.textLine(line)
+            canvas.drawText(text_object)
+
+            # Concatenate for string
+            insurance_names = dispatch.insurance_scope.insurance_scope_name if dispatch.insurance_scope else "N/A"
+            freight_names = dispatch.freight_basis.freight_basis_name if dispatch.freight_basis else "N/A"
+
+            warranty = f"Warranty: {dispatch.warranty}"
+            ld = f"LD: {dispatch.ld}"
+            manual = f"MANUALS/TCS/GC: {dispatch.manual_tcs_gc}"
+            insurance_name = "Insurance Scope: " + insurance_names
+            freight_name = "Freight Basis: " + freight_names
+
+            bill_to = []
+            bill_to.append(warranty)
+            bill_to.append(ld)
+            bill_to.append(manual)
+            bill_to.append(insurance_name)
+            bill_to.append(freight_name)
+
+            canvas.setFont("Helvetica-Bold", 4)
+            canvas.drawString(4.5 * inch, y_position + 15, "NOTE")
+            canvas.setFont("Helvetica", 7)
+            text_object = canvas.beginText(4.5 * inch, y_position)  # Adjusted x position to 3.5 * inch
+            canvas.setFont("Helvetica-Bold", 8)
+            for line in bill_to:
+                text_object.textLine(line)
+            canvas.drawText(text_object)
+            canvas.setFont("Helvetica", 7)
+            canvas.line(inch * 0.5, y_position - 0.8 * inch, width - inch * 0.5, y_position - 0.8 * inch)
+
+        def draw_wrapped_string(canvas, x, y, text, max_width):
+            if text is None:
+                text = ''
+            words = text.split()
+            lines = []
+            line = ""
+            for word in words:
+                if canvas.stringWidth(line + word) <= max_width:
+                    line += word + " "
+                else:
+                    lines.append(line.strip())
+                    line = word + " "
+            lines.append(line.strip())
+            for line in lines:
+                canvas.drawString(x, y, line)
+                y -= 12
+            return y
+
+        def draw_content(canvas, y_position, page_number, total_pages):
+            canvas.setFont("Helvetica", 8)
+            canvas.setFont("Helvetica-Bold", 8)
+            y_position -= 20
+
+            dispatch_header = [
+                'Model Description',
+                'MS Code',
+                'Linkage No'
+            ]
+            y_position -= 10
+            canvas.drawString(inch * 0.5, y_position, "Item No")
+            text_object = canvas.beginText(2 * inch + x_gap, y_position)
+            for dil_header in dispatch_header:
+                text_object.textLine(dil_header)
+            canvas.drawText(text_object)
+            canvas.drawString(6 * inch + x_gap, y_position, "Quantity/UOM")
+
+            # Draw a line based on the header
+            canvas.line(inch * 0.5, y_position - 10 * 3, width - inch * 0.5, y_position - 10 * 3)
+
+            # Data binding for content
+            canvas.setFont("Helvetica", 8)
+            y_position -= 20 * 2
+
+            for datas in response_data:
+                y_position -= 25  # Adjust for box spacing
+                if y_position < inch:  # Check if there is enough space on the page
+                    canvas.showPage()
+                    page_number += 1
+                    draw_header(canvas, page_number, total_pages)
+                    y_position = height - 2 * inch  # Adjust y_position after the header
+                    if page_number == 1:  # Only show shipment header on the first page
+                        shipment_header(canvas, y_position)
+                        y_position -= 0.8 * inch  # Adjust y_position after shipment_header
+
+                start_text = inch * 0.5
+                for master_item in datas['master_items']:
+                    # draw_wrapped_string(canvas, start_text, y_position, master_item.get('item_no', '') or 'N/A', 4 * inch)
+                    if y_position < inch:  # Check if there is enough space on the page
+                        canvas.showPage()
+                        page_number += 1
+                        draw_header(canvas, page_number, total_pages)
+                        y_position = height - 2 * inch  # Adjust y_position after the header
+
+                    canvas.setFont("Helvetica", 8)
+                    start_inline_text = 2 * inch + x_gap
+                    draw_wrapped_string(canvas, start_text, y_position, master_item.get('item_no', '') or 'N/A',
+                                        4 * inch)
+                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position,
+                                                     master_item.get('material_description', ''), 4 * inch)
+                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position,
+                                                     master_item.get('ms_code', ''), 2 * inch)
+                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position,
+                                                     master_item.get('linkage_no', ''), 4 * inch)
+                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position, "Cust PO  SI No: " + (
+                                master_item.get('customer_po_sl_no', '') or '-'), 2 * inch)
+                    y_position = draw_wrapped_string(canvas, start_inline_text, y_position, "Cust Part No: " + (
+                                master_item.get('customer_po_item_code', '') or '-'), 2 * inch)
+                    canvas.drawString(6 * inch + x_gap, y_position + 50, str(master_item.get('quantity', '')))
+                    canvas.setFont("Helvetica", 8)
+                    y_position -= 20  # Adjust for item packing spacing
+                    count = 0
+                    for inline_item in master_item.get('inline_items', []):
+                        if count == 4:  # Move to next line after 4 items
+                            y_position -= 30
+                            count = 0
+                        if y_position < inch:  # Check if there is enough space on the page
+                            canvas.showPage()
+                            page_number += 1
+                            draw_header(canvas, page_number, total_pages)
+                            y_position = height - 2 * inch  # Adjust y_position after the header
+
+                        text_object = canvas.beginText(2 * inch + 5 + (count * 1.5 * inch), y_position)
+                        canvas.setFont("Courier", 7)
+                        text_object.textLine(f"S/N=  {inline_item.get('serial_no', '')}")
+                        text_object.textLine(f"TAG=  {inline_item.get('tag_no', '')}")
+                        canvas.drawText(text_object)
+                        canvas.setFont("Helvetica", 8)
+                        count += 1  # Increment counter
+
+                    canvas.setDash(3, 3)
+                    y_position -= 30
+                    canvas.line(inch * 0.5, y_position, width - inch * 0.5, y_position)
+                    canvas.setDash()
+                    y_position -= 20  # Adjust for dash line spacing
+
+            return y_position, page_number
+
+        # Initialize the PDF creation and end of draw_content
+        page_number = 1
+        total_pages = 1
+        y_position = height - 100
+        draw_header(p, page_number, total_pages)  # Total pages is 0 for now
+        y_position -= 0.4 * inch * 2  # Adjust y_position for shipment_header
+        shipment_header(p, y_position)
+        y_position -= 0.8 * inch  # Adjust y_position after shipment_header
+        y_position, page_number = draw_content(p, y_position, page_number, total_pages)
+        # draw_footer(p, page_number, total_pages)
+
+        while y_position < inch:
+            p.showPage()
+            page_number += 1
+            draw_header(p, page_number, 0)  # Total pages is 0 for now
+            y_position = height - 3 * inch
+            y_position, page_number = draw_content(p, y_position, page_number, 0)
+            # draw_footer(p, page_number, total_pages)
+
+        # Finalize the PDF creation
+        p.showPage()
+        p.save()
+
+        # Save the PDF to the file system
+        media_path = os.path.join(settings.MEDIA_ROOT, "master_item")
+        if not os.path.exists(media_path):
+            os.makedirs(media_path)
+        file_path = os.path.join(media_path, f"master_item_summary_{dispatch.dil_id}.pdf")
+        with open(file_path, "wb") as file:
+            file.write(buffer.getvalue())
+
+        # Send the PDF to the client
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="master_item_summary_{dispatch.dil_id}.pdf"'
         buffer.seek(0)
         response.write(buffer.getvalue())
         return response
@@ -1354,8 +1605,10 @@ class DispatchReportViewSet(viewsets.ModelViewSet):
             serializer = DispatchInstructionSerializer(truck_request, many=True)
             for data in serializer.data:
                 data['no_of_boxes'] = BoxDetails.objects.filter(dil_id=data['dil_id'], main_box=True).count()
-                data['packing_cost'] = BoxDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('price'))['total']
-                data['billing_value'] = DCInvoiceDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('bill_amount'))['total']
+                data['packing_cost'] = BoxDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('price'))[
+                    'total']
+                data['billing_value'] = \
+                DCInvoiceDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('bill_amount'))['total']
                 data['sap_invoice_amount'] = 0
                 data['transportation_cost'] = 0
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -1716,8 +1969,8 @@ class CustomerDocumentsDetailsViewSet(viewsets.ModelViewSet):
             total_net = BoxDetails.objects.filter(dil_id=dil_id, main_box=True).aggregate(net_weight=Sum('net_weight'))[
                 'net_weight']
             total_gross = \
-            BoxDetails.objects.filter(dil_id=dil_id, main_box=True).aggregate(gross_weight=Sum('gross_weight'))[
-                'gross_weight']
+                BoxDetails.objects.filter(dil_id=dil_id, main_box=True).aggregate(gross_weight=Sum('gross_weight'))[
+                    'gross_weight']
             serializer = UnRelatedBoxDetailsSerializer(box_details, many=True)
             serialized_data = serializer.data
             # Add loop_count and box_detail_count to each item in the serialized data
