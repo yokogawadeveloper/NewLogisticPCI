@@ -1010,8 +1010,8 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
             file.write(buffer.getvalue())
         return response
 
-    @action(detail=False, methods=['post'], url_path="dispatch_packing_pdf_based_box_code")
-    def dispatch_packing_pdf_based_box_code(self, request):
+    @action(detail=False, methods=['post'], url_path="dispatch_packing_pdf_based_dil_id")
+    def dispatch_packing_pdf_based_dil_id(self, request):
         data = request.data
         dispatch = DispatchInstruction.objects.get(dil_id=data['dil_id'])
         box_details = BoxDetails.objects.filter(dil_id=data['dil_id'], main_box=True)
@@ -1083,7 +1083,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
             response_data.append(box_data_entry)  # Append to response_data
 
         response = response_data
-        return Response(response)
+        # return Response(response)
         # PDF Creation main logic
         buffer = BytesIO()
         p = canvas.Canvas(buffer, pagesize=A4)

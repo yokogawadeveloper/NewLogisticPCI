@@ -1378,13 +1378,10 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                         allocation.update(status="rejected", approved_date=datetime.now())
 
                     else:
-                        wf_da_status = \
-                            WorkFlowDaApprovers.objects.filter(dil_id_id=data['dil_id'], emp_id=user_id).values(
-                                'approver')[0]['approver']
+                        wf_da_status = WorkFlowDaApprovers.objects.filter(dil_id_id=data['dil_id'], emp_id=user_id).values('approver')[0]['approver']
                         data['approver'] = wf_da_status
 
-                        allocation = DAUserRequestAllocation.objects.filter(dil_id_id=dil_id, emp_id=user_id,
-                                                                            approver_level=current_level)
+                        allocation = DAUserRequestAllocation.objects.filter(dil_id_id=dil_id, emp_id=user_id,approver_level=current_level)
                         # approver_stages = allocation.values('approver_stage')[0]['approver_stage']
                         allocation.update(status="approved", approved_date=datetime.now(), approver_flag=True)
                         # DAUserRequestAllocation.objects.filter(dil_id_id=dil_id).update(approver_flag=True)
