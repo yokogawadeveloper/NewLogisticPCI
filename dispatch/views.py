@@ -1041,9 +1041,6 @@ class MasterItemBatchViewSet(viewsets.ModelViewSet):
             # for MasterItemList
             master_items = MasterItemList.objects.filter(dil_id=dil_id).order_by('ms_code', 'material_no')
             master_serializer = TestMasterItemListSerializer(master_items, many=True)
-
-
-
             for master_item in master_serializer.data:
                 if master_item['inline_items']:
                     for inline_item in master_item['inline_items']:

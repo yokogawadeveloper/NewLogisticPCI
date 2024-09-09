@@ -144,9 +144,10 @@ class BoxDetailViewSet(viewsets.ModelViewSet):
                     model_obj = BoxDetails.objects.get(box_details_id=obj['box_details_id'])
                     model_obj.parent_box = 'box-da_' + str(data['dil_id']) + '-' + str(random_code)
                     model_obj.status = 'packed'
+                    model_obj.box_no_manual = obj['box_no_manual']
                     update_list.append(model_obj)
                 # update the BoxDetails
-                BoxDetails.objects.bulk_update(update_list, ['parent_box', 'status', 'box_serial_no'])
+                BoxDetails.objects.bulk_update(update_list, ['parent_box', 'status', 'box_no_manual'])
                 master_list = MasterItemList.objects.filter(dil_id=data['dil_id'], status_no__lte=4).count()
                 if master_list == 0:
                     dispatch.update(
