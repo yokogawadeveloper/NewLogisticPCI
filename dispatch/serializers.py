@@ -145,8 +145,12 @@ class TestMasterItemListSerializer(serializers.ModelSerializer):
     class Meta:
         model = MasterItemList
         fields = ['item_id', 'dil_id', 'material_description', 'material_no', 'ms_code', 'item_no',
-                  's_loc', 'bin', 'plant', 'linkage_no', 'group', 'quantity', 'serial_no', 'packed_quantity',
-                  'match_no', 'tag_no', 'range', 'item_status', 'item_status_no', 'inline_items', 'sum_quantity']
+                  's_loc', 'bin', 'plant', 'linkage_no', 'group', 'quantity', 'country_of_origin', 'serial_no',
+                  'match_no', 'tag_no', 'range', 'customer_po_sl_no', 'customer_po_item_code',
+                  'item_status', 'item_status_no', 'packed_quantity', 'revision_flag', 'revision_count', 'verified_by',
+                  'verified_at', 'verified_flag', 'packed_by', 'packed_at', 'packing_flag', 'custom_po_flag',
+                  'serial_no_qty', 'serial_flag', 'warranty_flag', 'warranty_date', 'status', 'status_no',
+                  'inline_items', 'sum_quantity']
 
     def get_sum_quantity(self, obj):
         sum_quantity = MasterItemList.objects.filter(
