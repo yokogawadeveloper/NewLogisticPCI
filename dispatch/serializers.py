@@ -144,7 +144,7 @@ class TestMasterItemListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MasterItemList
-        fields = ['item_id', 'dil_id', 'material_description', 'material_no', 'ms_code', 'item_no',
+        fields = ['item_id', 'dil_id', 'material_description', 'material_no', 'ms_code', 'item_no', 'so_no',
                   's_loc', 'bin', 'plant', 'linkage_no', 'group', 'quantity', 'country_of_origin', 'serial_no',
                   'match_no', 'tag_no', 'range', 'customer_po_sl_no', 'customer_po_item_code',
                   'item_status', 'item_status_no', 'packed_quantity', 'revision_flag', 'revision_count', 'verified_by',

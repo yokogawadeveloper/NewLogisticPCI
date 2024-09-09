@@ -264,7 +264,8 @@ class DispatchInstructionViewSet(viewsets.ModelViewSet):
             date_to = request.data.get('date_to', None)
 
             # Fetch allocation DIL IDs for the current user
-            allocation_dil_ids = DAUserRequestAllocation.objects.filter(emp_id=request.user).values_list('dil_id',flat=True)
+            allocation_dil_ids = DAUserRequestAllocation.objects.filter(emp_id=request.user).values_list('dil_id',
+                                                                                                         flat=True)
 
             # If no allocation DIL IDs are found, return an empty response
             if not allocation_dil_ids:
@@ -281,8 +282,10 @@ class DispatchInstructionViewSet(viewsets.ModelViewSet):
             dispatch = dispatch.filter(dil_id__in=allocation_dil_ids)
             serializer = DispatchInstructionSerializer(dispatch, many=True)
             for data in serializer.data:
-                data['packing_cost'] = BoxDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('price'))['total']
-                data['billing_value'] = DCInvoiceDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('bill_amount'))['total']
+                data['packing_cost'] = BoxDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('price'))[
+                    'total']
+                data['billing_value'] = \
+                DCInvoiceDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('bill_amount'))['total']
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -1030,10 +1033,16 @@ class MasterItemBatchViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], url_path='master_list_with_inline_dil')
     def master_list_with_inline_dil(self, request, *args, **kwargs):
         try:
+            response_data = []
             dil_id = request.data['dil_id']
+            dispatch = DispatchInstruction.objects.get(dil_id=dil_id)
+            ship_to_party_name = dispatch.ship_to_party_name
+            dil_no = dispatch.dil_no
+            # for MasterItemList
             master_items = MasterItemList.objects.filter(dil_id=dil_id).order_by('ms_code', 'material_no')
             master_serializer = TestMasterItemListSerializer(master_items, many=True)
-            response_data = []
+
+
 
             for master_item in master_serializer.data:
                 if master_item['inline_items']:
@@ -1048,7 +1057,10 @@ class MasterItemBatchViewSet(viewsets.ModelViewSet):
                         if inline_item['scale_min'] is not None and inline_item['scale_max'] is not None:
                             disp_range = str(int(inline_item['scale_min'])) + ' to ' + str(
                                 int(inline_item['scale_max'])) + ' ' + str(inline_item['scale_unit'])
+
                         # inline Item Data Binding
+                        inline_data['dispatch_customer_name'] = ship_to_party_name
+                        inline_data['dispatch_dil_no'] = dil_no
                         inline_data['inline_serial_no'] = inline_item['serial_no']
                         inline_data['inline_tag_no'] = inline_item['tag_no']
                         inline_data['accessory'] = inline_item['accessory']
@@ -1063,6 +1075,7 @@ class MasterItemBatchViewSet(viewsets.ModelViewSet):
                         inline_data['range_output'] = inline_item['range_output']
                         inline_data['cal_range'] = cal_range
                         inline_data['disp_range'] = disp_range
+
                         response_data.append(inline_data)
                 else:
                     inline_data = master_item
@@ -1079,6 +1092,7 @@ class MasterItemBatchViewSet(viewsets.ModelViewSet):
                     inline_data['range_min'] = None
                     inline_data['range_unit'] = None
                     inline_data['range_output'] = None
+
                     response_data.append(inline_data)
             return Response(response_data, status=status.HTTP_200_OK)
         except Exception as e:
