@@ -1360,13 +1360,13 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                     cc.extend(['YIL.Developer4@yokogawa.com'])
                     subject = 'DA Prepared'
                     message = render_to_string("prepare_dil.html", mail_dil_context)
-
+                    # main logic for processing
                     current_level = dil.values('current_level')[0]['current_level']
                     dil_level = dil.values('dil_level')[0]['dil_level']
                     wf_approver = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id, level=current_level)
                     checking = wf_approver.values('approver')[0]['approver']
                     wf_da_count = wf_approver.count()
-
+                    # Check for status wise
                     if stature == "modification":
                         dispatch = DispatchInstruction.objects.select_for_update().filter(dil_id=data['dil_id'])
                         dispatch.update(current_level=1, dil_status="modification", dil_sub_status_no=0,
@@ -1388,6 +1388,13 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                         # approver_stages = allocation.values('approver_stage')[0]['approver_stage']
                         allocation.update(status="approved", approved_date=datetime.now(), approver_flag=True)
                         # DAUserRequestAllocation.objects.filter(dil_id_id=dil_id).update(approver_flag=True)
+                        # next_approver = False
+                        parallel_count = 0
+                        control_flow_approvers = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id,level=current_level).distinct('approver')
+                        for _ in control_flow_approvers:
+                            parallel_count = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id,level=current_level,status='approved').count()
+                        if parallel_count > 0:
+                            next_approver = True
 
                         if dil_level >= current_level:
                             wf_approver.filter(emp_id=request.user.id).update(status=stature)
@@ -1417,25 +1424,7 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                                     recipient_list.append(user.email)
 
                             # start parallel
-                            elif wf_da_count == wf_approver.filter(parallel=True, status__contains='approved').count():
-                                control_flow_approvers = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id,level=current_level).distinct('approver')
-                                next_approver = False
-                                for _ in control_flow_approvers:
-                                    parallel_count = WorkFlowDaApprovers.objects.filter(
-                                        dil_id_id=dil_id,
-                                        level=current_level,
-                                        status='approved'
-                                    ).count()
-
-                                    if parallel_count > 0:
-                                        next_approver = True
-
-                                flow_approvers = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id,level=current_level,status='pending')
-                                # flow_approvers_count = flow_approvers.count()
-                                # # Increase the current_level
-                                # if flow_approvers_count < 1:
-                                #     current_level += 1
-
+                            elif next_approver:
                                 if next_approver:
                                     current_level += 1
                                 dil.update(
@@ -1444,6 +1433,7 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                                     dil_status_no=2,
                                     only_for_packing_flag=only_packing_flag
                                 )
+                                flow_approvers = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id,level=current_level, status='pending')
                                 for i in flow_approvers:
                                     DAUserRequestAllocation.objects.create(
                                         dil_id_id=dil_id,
