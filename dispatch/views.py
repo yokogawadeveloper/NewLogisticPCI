@@ -985,8 +985,9 @@ class MasterItemBatchViewSet(viewsets.ModelViewSet):
             master_item_list = MasterItemList.objects.filter(dil_id=dil_id).all()
             serializer = MasterItemBatchSerializer(master_item_list, many=True)
             serialized_data = list(serializer.data)  # Convert to a list to make it mutable
-            serial_nos = []
+
             for data in serialized_data:
+                serial_nos = []
                 data['dispatch_dil_no'] = dispatch.dil_no
                 data['dispatch_customer_name'] = dispatch.ship_to_party_name
                 for inline_items in data['inline_items']:
