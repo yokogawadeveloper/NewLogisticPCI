@@ -1365,7 +1365,6 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                     wf_approver = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id, level=current_level)
                     checking = wf_approver.values('approver')[0]['approver']
                     wf_da_count = wf_approver.count()
-                    wf_da_count = 1
 
                     if stature == "modification":
                         dispatch = DispatchInstruction.objects.select_for_update().filter(dil_id=data['dil_id'])
