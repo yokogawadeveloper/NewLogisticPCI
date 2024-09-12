@@ -269,9 +269,8 @@ class TruckListViewSet(viewsets.ModelViewSet):
                 data = request.data
                 truck_list = data.get('truck_list')
                 dispatch_list = data.get('dispatch_list')
-                freight_basis = data.get('freight_basis')
-                mode_of_shipment = data.get('mode_of_shipment')
-                delivery_terms = data.get('delivery_terms')
+                mode_of_delivery = data.get('mode_of_delivery')
+                freight_mode = data.get('freight_mode')
                 oa_details = data.get('oa_details')
                 # filter most relevant
                 transportation = TrackingTransportation.objects.get(id=data.get('transporter'))
@@ -309,9 +308,10 @@ class TruckListViewSet(viewsets.ModelViewSet):
                             dil_id = dispatch_data.get('dil_id')
                             # update dispatch
                             dispatch = DispatchInstruction.objects.get(dil_id=dil_id)
-                            dispatch.mode_of_shipment_id = mode_of_shipment
-                            dispatch.delivery_terms_id = delivery_terms
-                            dispatch.freight_basis_id = freight_basis
+                            dispatch.delivery_terms_id = mode_of_delivery
+                            dispatch.freight_basis_id = freight_mode
+                            dispatch.dil_status_no = 1
+                            dispatch.dil_status = 'Truck Allocated'
                             dispatch.save()
                             # create Truck DIl Map
                             TruckDilMappingDetails.objects.create(
