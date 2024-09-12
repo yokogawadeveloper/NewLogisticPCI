@@ -20,16 +20,15 @@
             <th width="10%"></th>
             <th width="10%"></th>
         </tr>
+
         <tr>
             <td colspan="7" style="text-align:left;font-size:16px;font-family:Arial;color:blue;"><b>
                     <p style="line-height:0px">YOKOGAWA INDIA LIMITED</p>
                 </b>
                 <p style="line-height:0px;font-family:Arial;color:blue;font-size:14px;">PLOT NO.96,</p>
-                <p style="line-height:0px;font-family:Arial;color:blue;font-size:14px;">ELECTRONIC CITY COMPLEX,HOSUR
-                    ROAD BANGLORE - 560100.</p>
+                <p style="line-height:0px;font-family:Arial;color:blue;font-size:14px;">ELECTRONIC CITY COMPLEX,HOSUR ROAD BANGALORE - 560100.</p>
                 <p style="line-height:0px;font-family:Arial;color:blue;font-size:14px;">TEL NO: 91(080) 41586000.</p>
-                <P style="line-height:0px;font-family:Arial;color:blue;font-size:14px;"> email:
-                    Yil-logistics@yokogawa.com</P>
+                <P style="line-height:0px;font-family:Arial;color:blue;font-size:14px;"> email:Yil-logistics@yokogawa.com</P>
             </td>
 
             <!-- <td colspan="3" style="font-size:15px;text-align:right;"><img src="{{ yokogawa_logo }}" width="130px" height="22px" /></td> -->
@@ -96,7 +95,7 @@
         </tr>
 
         <tr>
-            <td colspan="5" style="text-align:left;padding-bottom:18px;font-family:Arial;font-size:14px;"><b>Dear Sir/Madam,:</b></td>
+            <td colspan="5" style="text-align:left;padding-bottom:18px;font-family:Arial;font-size:14px;"><b>Dear Sir/Madam:</b></td>
             <td colspan="5"><b></b></td>
         </tr>
 
@@ -152,7 +151,7 @@
                 <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>Challan No</th>
                 <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>Challan Value(INR)</th>
                 <th colspan="2" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>LRNo/LR Date</th>
-                <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>TruckNo.<br/TruckType</th>
+                <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>TruckNo.<br>/TruckType</th>
                 <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>No.Of Packages</th>
                 <th colspan="1" style='text-align: center;border:solid 1px;font-family:Arial;font-size:12px;'>EWay Bill no</th>
             </tr>
@@ -160,7 +159,7 @@
     
         <tbody>
             {% for data in dc_invoice_data %}
-            <tr style="border: 1px solid black;">
+            <tr style="border: 1px solid black; margin: 50px" >
                 <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.bill_no == None %} - {% else %} {{data.bill_no}} {% endif %}</td>
                 <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.bill_date == None %} - {% else %} {{data.bill_date}} {% endif %}</td>
                 <td colspan="1" style='text-align: center;border:solid 1px;'>{% if data.bill_amount == None %} - {% else %} {{data.bill_amount}} {% endif %}</td>

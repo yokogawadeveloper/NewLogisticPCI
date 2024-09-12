@@ -1760,6 +1760,7 @@ class CustomerConsigneeExport(viewsets.ModelViewSet):
                 'destination': delivery_challan.destination,
                 'consignee_remakes': delivery_challan.consignee_remakes,
                 'total_consignee_value': total_consignee_value or 0.0,
+                'other_person_name': dispatch.customer_name,
                 'insurance': dispatch.insurance_scope.insurance_scope_name if dispatch.insurance_scope else None,
                 'mode_of_delivery': dispatch.mode_of_shipment.mode_of_shipment_name if dispatch.mode_of_shipment else None,
                 'freight_mode': dispatch.freight_basis.freight_basis_name if dispatch.freight_basis else None
