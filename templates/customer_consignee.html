@@ -193,60 +193,47 @@
         </tr>
         <!-- start descriptions  -->
         <tr>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>DESCRIPTION OF GOODS:</b></td>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
-                <span>{% if descOfGoods == None %} - {% else %} {{descOfGoods}} {% endif %}</span>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>DESCRIPTION OF GOODS</b></td>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><span>:</span>{% if descOfGoods == None %} - {% else %} {{descOfGoods}} {% endif %}
             </td>
         </tr>
         
         <tr>
             <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>TRANSPORTER NAME</b></td>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
-                {% if transporter_name == None %} - {% else %} {{transporter_name}} {% endif %}
-            </td>
-        </tr>
-        
-        <!-- <tr>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>TRANSPORTATION MODE</b></td>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
-                {% if mode_of_transport == None %} - {% else %} {{mode_of_transport}} {% endif %}
-            </td>
-        </tr> -->
-        
-        <tr>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>MODE OF DELIVERY:</b></td>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
-                {% if mode_of_delivery == None %} - {% else %} {{mode_of_delivery}} {% endif %}
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><span>:</span>{% if transporter_name == None %} - {% else %} {{transporter_name}} {% endif %}
             </td>
         </tr>
         
         <tr>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>FREIGHT MODE:</b></td>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
-                {% if freight_mode == None %} - {% else %} {{freight_mode}} {% endif %}
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>MODE OF DELIVERY</b></td>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><span>:</span>{% if mode_of_delivery == None %} - {% else %} {{mode_of_delivery}} {% endif %}
             </td>
         </tr>
         
         <tr>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>DESTINATION:</b></td>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
-                {% if destination == None %} - {% else %} {{destination}} {% endif %}
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>FREIGHT MODE</b></td>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><span>:</span>{% if freight_mode == None %} - {% else %} {{freight_mode}} {% endif %}
             </td>
         </tr>
         
         <tr>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>TOTAL CONSIGNMENT VALUE:</b></td>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;">
-                INR. {% if total_consignee_value == None %} - {% else %} {{total_consignee_value}} {% endif %}
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>DESTINATION</b></td>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><span>:</span>{% if destination == None %} - {% else %} {{destination}} {% endif %}
             </td>
         </tr>
         
         <tr>
-            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>REMARKS:</b></td>
-            <td colspan="5" style="text-align:left;padding-bottom:14px;font-family:Arial;font-size:12px;">
-                {% if consignee_remakes == None %} - {% else %} {{consignee_remakes}} {% endif %}
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><b>TOTAL CONSIGNMENT VALUE</b></td>
+            <td colspan="5" style="text-align:left;font-family:Arial;font-size:12px;"><span>:</span>INR. {% if total_consignee_value == None %} - {% else %} {{total_consignee_value}} {% endif %}
             </td>
         </tr>
+
+        <tr>
+            <td colspan="1" style="text-align:left;font-family:Arial;font-size:12px;"><b>Remarks</b></td>
+            <td colspan="9" style="text-align:left;font-family:Arial;font-size:12px;"><span>:</span>{% if consignee_remakes == None %} - {% else %} {{consignee_remakes}} {% endif %}
+            </td>
+        </tr>
+
         <!-- end descriptions  -->
         <tr>
             <td><br /></td>
