@@ -38,6 +38,7 @@ class DispatchInstruction(models.Model):
     customer_contact_details = models.TextField(null=True, blank=True)
     customer_name = models.CharField(max_length=100, null=True, blank=True)
     customer_number = models.CharField(max_length=100, null=True, blank=True)
+    customer_email = models.CharField(max_length=200,null=True,blank=True)
     partial_shipment = models.CharField(max_length=100, null=True, blank=True)
     if_partial_billable = models.CharField(max_length=100, null=True, blank=True)
     any_other_special_instruction = models.TextField(null=True, blank=True)

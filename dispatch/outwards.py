@@ -92,13 +92,13 @@ class ConnectionDispatchViewSet(viewsets.ModelViewSet):
             connection = pyodbc.connect('DRIVER={SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
             connection_cursor = connection.cursor()
             # For SQL Store Procedure
-            storage_query = "SELECT MAX(SoId) AS MaxSoId FROM WA_SaleOrderMaster WHERE SoNo = ?"
-            connection_cursor.execute(storage_query, (so_no,))
-            storage_result = connection_cursor.fetchone()
-            so_id = storage_result[0]
-            connection_cursor.execute(f"exec Sp_UpdateSerialNumber '{so_no}', '{so_id}','400136'")
-            time.sleep(40)
-            connection_cursor.commit()
+            # storage_query = "SELECT MAX(SoId) AS MaxSoId FROM WA_SaleOrderMaster WHERE SoNo = ?"
+            # connection_cursor.execute(storage_query, (so_no,))
+            # storage_result = connection_cursor.fetchone()
+            # so_id = storage_result[0]
+            # connection_cursor.execute(f"exec Sp_UpdateSerialNumber '{so_no}', '{so_id}','400136'")
+            # time.sleep(40)
+            # connection_cursor.commit()
             # Fetch item numbers based on so_no
             item_nos_query = MasterItemList.objects.filter(dil_id=dil_id).values_list('item_no', flat=True)
             item_nos = list(item_nos_query)
