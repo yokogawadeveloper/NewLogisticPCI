@@ -285,7 +285,7 @@ class DispatchInstructionViewSet(viewsets.ModelViewSet):
                 data['packing_cost'] = BoxDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('price'))[
                     'total']
                 data['billing_value'] = \
-                DCInvoiceDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('bill_amount'))['total']
+                    DCInvoiceDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('bill_amount'))['total']
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -1328,6 +1328,22 @@ class DAUserRequestAllocationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(methods=['post'], detail=False, url_path='user_allocation_assigned')
+    def user_allocation_assigned(self, request):
+        try:
+            data = request.data
+            user_list = data['emp_id']
+            for emp_id in user_list:
+                DAUserRequestAllocation.objects.create(
+                    dil_id_id=data['dil_id'],
+                    emp_id_id=emp_id,
+                    status="pending",
+                    approve_status=data['approve_status']
+                )
+                return Response({'message': 'User Allocated!'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class DILAuthThreadsViewSet(viewsets.ModelViewSet):
     queryset = DAAuthThreads.objects.all()
@@ -1382,17 +1398,23 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                         allocation.update(status="rejected", approved_date=datetime.now())
 
                     else:
-                        wf_da_status = WorkFlowDaApprovers.objects.filter(dil_id_id=data['dil_id'], emp_id=user_id).values('approver')[0]['approver']
+                        wf_da_status = \
+                        WorkFlowDaApprovers.objects.filter(dil_id_id=data['dil_id'], emp_id=user_id).values('approver')[
+                            0]['approver']
                         data['approver'] = wf_da_status
-                        allocation = DAUserRequestAllocation.objects.filter(dil_id_id=dil_id, emp_id=user_id,approver_level=current_level)
+                        allocation = DAUserRequestAllocation.objects.filter(dil_id_id=dil_id, emp_id=user_id,
+                                                                            approver_level=current_level)
                         # approver_stages = allocation.values('approver_stage')[0]['approver_stage']
                         allocation.update(status="approved", approved_date=datetime.now(), approver_flag=True)
                         # DAUserRequestAllocation.objects.filter(dil_id_id=dil_id).update(approver_flag=True)
                         # next_approver = False
                         parallel_count = 0
-                        control_flow_approvers = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id,level=current_level).distinct('approver')
+                        control_flow_approvers = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id,
+                                                                                    level=current_level).distinct(
+                            'approver')
                         for _ in control_flow_approvers:
-                            parallel_count = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id,level=current_level,status='approved').count()
+                            parallel_count = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id, level=current_level,
+                                                                                status='approved').count()
                         if parallel_count > 0:
                             next_approver = True
 
@@ -1433,7 +1455,9 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                                     dil_status_no=2,
                                     only_for_packing_flag=only_packing_flag
                                 )
-                                flow_approvers = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id,level=current_level, status='pending')
+                                flow_approvers = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id,
+                                                                                    level=current_level,
+                                                                                    status='pending')
                                 for i in flow_approvers:
                                     DAUserRequestAllocation.objects.create(
                                         dil_id_id=dil_id,
