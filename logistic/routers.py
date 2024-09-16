@@ -92,4 +92,3 @@ router.register('customer_details_pdf', CustomerDocumentsDetailsViewSet, basenam
 
 # ----------------------------- Monitoring ------------------------------------------- #
 router.register('monthly_monitor', MonthlyMonitoringViewSet, basename='monthly_monitor')
-

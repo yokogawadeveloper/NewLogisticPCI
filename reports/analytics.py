@@ -85,3 +85,26 @@ class MonthlyMonitoringViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e), 'status': status.HTTP_400_BAD_REQUEST})
 
+    @action(detail=False, methods=['GET'], url_path='dispatch_status_wise')
+    def dispatch_status_wise(self, request):
+        try:
+            dispatch = DispatchInstruction.objects.all()
+            dispatch_count = dispatch.filter(dil_status_no__in=[14, 15]).aggregate(count=Count('dil_id'))
+            submitted_count = dispatch.filter(dil_status_no__in=[1, 2, 4]).count()
+            acknowledged_count = dispatch.filter(dil_status_no__in=[3, 5]).count()
+            store_count = dispatch.filter(dil_status_no__in=[6, 7]).count()
+            packing_count = dispatch.filter(dil_status_no__in=[8, 9, 10]).count()
+            loading_count = dispatch.filter(dil_status_no__in=[11, 12, 13]).count()
+            security_count = dispatch.filter(dil_status_no__in=[16]).count()
+
+            return Response({
+                'dispatch_count': dispatch_count['count'],
+                'submitted_count': submitted_count,
+                'acknowledged_count': acknowledged_count,
+                'store_count': store_count,
+                'packing_count': packing_count,
+                'loading_count': loading_count,
+                'security_count': security_count,
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e), 'status': status.HTTP_400_BAD_REQUEST})

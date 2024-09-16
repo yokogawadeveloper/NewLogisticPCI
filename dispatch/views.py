@@ -302,6 +302,17 @@ class DispatchUnRelatedViewSet(viewsets.ModelViewSet):
         serializer = DispatchUnRelatedSerializer(dispatch, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['post'], url_path='dispatch_existing')
+    def dispatch_existing(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            if DispatchInstruction.objects.filter(**data).exists():
+                return Response({'message': True}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({'message': False}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'message': str(e), 'status': status.HTTP_400_BAD_REQUEST})
+
 
 class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
     queryset = DispatchInstruction.objects.all()
@@ -1398,23 +1409,20 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
                         allocation.update(status="rejected", approved_date=datetime.now())
 
                     else:
-                        wf_da_status = \
-                        WorkFlowDaApprovers.objects.filter(dil_id_id=data['dil_id'], emp_id=user_id).values('approver')[
-                            0]['approver']
+                        # Initialize next_approver to avoid referencing before assignment
+                        next_approver = False
+                        wf_da_status = WorkFlowDaApprovers.objects.filter(dil_id_id=data['dil_id'], emp_id=user_id).values('approver')[0]['approver']
                         data['approver'] = wf_da_status
-                        allocation = DAUserRequestAllocation.objects.filter(dil_id_id=dil_id, emp_id=user_id,
-                                                                            approver_level=current_level)
+                        allocation = DAUserRequestAllocation.objects.filter(dil_id_id=dil_id, emp_id=user_id,approver_level=current_level)
                         # approver_stages = allocation.values('approver_stage')[0]['approver_stage']
                         allocation.update(status="approved", approved_date=datetime.now(), approver_flag=True)
                         # DAUserRequestAllocation.objects.filter(dil_id_id=dil_id).update(approver_flag=True)
                         # next_approver = False
                         parallel_count = 0
-                        control_flow_approvers = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id,
-                                                                                    level=current_level).distinct(
-                            'approver')
+                        control_flow_approvers = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id,level=current_level).distinct('approver')
                         for _ in control_flow_approvers:
-                            parallel_count = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id, level=current_level,
-                                                                                status='approved').count()
+                            parallel_count = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id, level=current_level,status='approved').count()
+
                         if parallel_count > 0:
                             next_approver = True
 
