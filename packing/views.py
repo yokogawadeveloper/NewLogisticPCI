@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from django.core.exceptions import ObjectDoesNotExist
+from django.db.utils import IntegrityError, OperationalError
 from django.db import transaction
 from django.db.models import Count
 from rest_framework import permissions, status
@@ -156,6 +156,9 @@ class BoxDetailViewSet(viewsets.ModelViewSet):
                         packed_date=datetime.datetime.now()
                     )
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except (IntegrityError, OperationalError) as e:
+            transaction.rollback()
+            return Response({'error': str(e)}, status=status.HTTP_409_CONFLICT)
         except Exception as e:
             transaction.rollback()
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
