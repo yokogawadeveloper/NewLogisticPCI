@@ -466,6 +466,9 @@ class TruckListViewSet(viewsets.ModelViewSet):
         try:
             dispatch_filter = request.data['dispatch_filter']
             truck_filter = request.data['truck_filter']
+            challan_filter = request.data['challan_filter']
+            truck_date_filter = request.data['truck_date_filter']
+
             date_flag = request.data['date_flag']
             date_type = request.data['date_type']
             date_from = request.data['date_from']
@@ -473,46 +476,42 @@ class TruckListViewSet(viewsets.ModelViewSet):
             if dispatch_filter and truck_filter:
                 if date_flag:
                     if date_type == "submitted_date":
-                        dispatch = DispatchInstruction.objects.filter(**dispatch_filter,
-                                                                      submitted_date__range=[date_from, date_to])
-                        loading = TruckLoadingDetails.objects.filter(
-                            dil_id__in=dispatch.values_list('dil_id', flat=True))
-                        truck_list = TruckList.objects.filter(id__in=loading.values_list('truck_list_id', flat=True),
-                                                              **truck_filter)
+                        dispatch = DispatchInstruction.objects.filter(**dispatch_filter,submitted_date__range=[date_from, date_to])
+                        loading = TruckLoadingDetails.objects.filter( dil_id__in=dispatch.values_list('dil_id', flat=True))
+                        truck_list = TruckList.objects.filter(id__in=loading.values_list('truck_list_id', flat=True), **truck_filter)
                     else:
                         columns_search = date_type + '__range'
-                        dispatch = DispatchInstruction.objects.filter(**dispatch_filter).values_list('dil_id',
-                                                                                                     flat=True)
-                        loading = TruckLoadingDetails.objects.filter(dil_id__in=dispatch).values_list('truck_list_id',
-                                                                                                      flat=True)
-                        truck_list = TruckList.objects.filter(id__in=loading, **truck_filter,
-                                                              **{columns_search: [date_from, date_to]})
+                        dispatch = DispatchInstruction.objects.filter(**dispatch_filter).values_list('dil_id',flat=True)
+                        loading = TruckLoadingDetails.objects.filter(dil_id__in=dispatch).values_list('truck_list_id',flat=True)
+                        truck_list = TruckList.objects.filter(id__in=loading, **truck_filter,**{columns_search: [date_from, date_to]})
                 else:
                     dispatch = DispatchInstruction.objects.filter(**dispatch_filter)
                     loading = TruckLoadingDetails.objects.filter(dil_id__in=dispatch.values_list('dil_id', flat=True))
-                    truck_list = TruckList.objects.filter(id__in=loading.values_list('truck_list_id', flat=True),
-                                                          **truck_filter)
-
+                    truck_list = TruckList.objects.filter(id__in=loading.values_list('truck_list_id', flat=True),**truck_filter)
+                # Apply truck_date_filter if present
+                if truck_date_filter and truck_date_filter['date_flag']:
+                    truck_date_type = truck_date_filter['date_type'] + '__range'
+                    truck_date_from = truck_date_filter['date_from']
+                    truck_date_to = truck_date_filter['date_to']
+                    truck_list = truck_list.filter(**{truck_date_type: [truck_date_from, truck_date_to]})
                 # getting truck list details based on dispatch filter and truck filter
                 serializer = TruckListSerializer(truck_list, many=True)
                 for data in serializer.data:
                     loading_details = TruckLoadingDetails.objects.filter(truck_list_id=data['id'])
                     loading_details_serializer = TruckLoadingDetailsSerializer(loading_details.first(), many=False)
 
-                    delivery_challan = DeliveryChallan.objects.filter(truck_list=data['id'])
+                    delivery_challan = DeliveryChallan.objects.filter(truck_list=data['id'], **challan_filter)
                     delivery_challan_serializer = DeliveryChallanSerializer(delivery_challan.first(), many=False)
 
                     truck_delivery_details = TruckDeliveryDetails.objects.filter(truck_list_id=data['id'])
-                    truck_delivery_details_serializer = TruckDeliveryDetailsSerializer(truck_delivery_details.first(),
-                                                                                       many=True)
+                    truck_delivery_details_serializer = TruckDeliveryDetailsSerializer(truck_delivery_details.first(), many=True)
 
                     data['delivery_challan'] = delivery_challan_serializer.data
                     data['loading_details'] = loading_details_serializer.data
                     data['truck_delivery_details'] = truck_delivery_details_serializer.data
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response({'error': 'Dispatch filter or Truck filter is required'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Dispatch filter or Truck filter is required'},status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

@@ -1511,9 +1511,9 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                     y_position = draw_wrapped_string(canvas, start_inline_text, y_position,
                                                      master_item.get('linkage_no', ''), 4 * inch)
                     y_position = draw_wrapped_string(canvas, start_inline_text, y_position, "Cust PO  SI No: " + (
-                                master_item.get('customer_po_sl_no', '') or '-'), 2 * inch)
+                            master_item.get('customer_po_sl_no', '') or '-'), 2 * inch)
                     y_position = draw_wrapped_string(canvas, start_inline_text, y_position, "Cust Part No: " + (
-                                master_item.get('customer_po_item_code', '') or '-'), 2 * inch)
+                            master_item.get('customer_po_item_code', '') or '-'), 2 * inch)
                     canvas.drawString(6 * inch + x_gap, y_position + 50, str(master_item.get('quantity', '')))
                     canvas.setFont("Helvetica", 8)
                     y_position -= 20  # Adjust for item packing spacing
@@ -1608,7 +1608,7 @@ class DispatchReportViewSet(viewsets.ModelViewSet):
                 data['packing_cost'] = BoxDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('price'))[
                     'total']
                 data['billing_value'] = \
-                DCInvoiceDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('bill_amount'))['total']
+                    DCInvoiceDetails.objects.filter(dil_id=data['dil_id']).aggregate(total=Sum('bill_amount'))['total']
                 data['sap_invoice_amount'] = 0
                 data['transportation_cost'] = 0
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -1804,6 +1804,7 @@ class DCInvoiceDetailsReportViewSet(viewsets.ModelViewSet):
             dispatch_flag = data.get('dispatch_flag', False)
             delivery_flag = data.get('delivery_flag', False)
             truck_flag = data.get('truck_flag', False)
+            inv_date_flag = data.get('inv_date_flag', False)
 
             dispatch_filter = data.get('dispatch_filter', {})
             delivery_filter = data.get('delivery_filter', {})
@@ -1825,6 +1826,11 @@ class DCInvoiceDetailsReportViewSet(viewsets.ModelViewSet):
                 delivery_ids = DeliveryChallan.objects.filter(**delivery_filter).values_list('id', flat=True)
                 if delivery_ids:
                     queryset = DCInvoiceDetails.objects.filter(delivery_challan__in=delivery_ids)
+
+            if inv_date_flag:
+                date_from = data['date_from']
+                date_to = data['date_to']
+                queryset = DCInvoiceDetails.objects.filter(bill_date__range=[date_from, date_to])
 
             serializer = DCInvoiceDetailsSerializer(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
