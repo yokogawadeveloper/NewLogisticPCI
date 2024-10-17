@@ -700,70 +700,73 @@ class ItemPackingViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], detail=False, url_path='add_item_to_box')
     def add_item_to_box(self, request, *args, **kwargs):
         try:
-            data = request.data
-            dispatch = DispatchInstruction.objects.filter(dil_id=data['dil_id'])
-            for obj in data['item_list']:
-                item_packing = ItemPacking.objects.create(
-                    item_ref_id_id=obj['item_id'],
-                    item_name=obj['material_description'],
-                    item_qty=obj['entered_qty'],
-                    is_parent=data['main_box'],
-                    box_code=data['box_code'],
-                    remarks=obj['remarks'],
-                    created_by_id=request.user.id,
-                )
-                for inline_items in obj['inline_items']:
-                    serial_no = inline_items['serial_no']
-                    tag_no = inline_items['tag_no']
-                    inline_item_list_id = inline_items['inline_item_id']
-                    ItemPackingInline.objects.create(
-                        inline_item_list_id_id=inline_item_list_id,
-                        item_pack_id=item_packing,
-                        serial_no=serial_no,
-                        tag_no=tag_no,
-                        box_no_manual=1,
+            with transaction.atomic():
+                data = request.data
+                dispatch = DispatchInstruction.objects.filter(dil_id=data['dil_id'])
+                for obj in data['item_list']:
+                    item_packing = ItemPacking.objects.create(
+                        item_ref_id_id=obj['item_id'],
+                        item_name=obj['material_description'],
+                        item_qty=obj['entered_qty'],
+                        is_parent=data['main_box'],
+                        box_code=data['box_code'],
+                        remarks=obj['remarks'],
                         created_by_id=request.user.id,
-                        updated_by_id=request.user.id,
                     )
-                    InlineItemList.objects.filter(inline_item_id=inline_item_list_id).update(packed_flag=True)
-            # creating MasterItemList
-            update_list = []
-            for obj in data['item_list']:
-                item_obj = MasterItemList.objects.get(item_id=obj['item_id'])
-                item_obj.packed_quantity = obj['packed_qty'] + obj['entered_qty']
-                packed_qty = obj['packed_qty'] + obj['entered_qty']
-                if packed_qty == obj['quantity']:
-                    item_obj.status = "packed"
-                    item_obj.packing_flag = 4
-                    item_obj.status_no = 5
-                # appending latest records
-                update_list.append(item_obj)
-            MasterItemList.objects.bulk_update(update_list, ['packed_quantity', 'status', 'packing_flag', 'status_no'])
-            # update the dispatch advice status
-            master_list = MasterItemList.objects.filter(dil_id=data['dil_id'], status_no__lte=4).count()
-            if master_list == 0:
-                dispatch.update(
-                    dil_status="Packed ,Ready For Load ",
-                    dil_status_no=11, packed_flag=True,
-                    packed_date=datetime.datetime.now()
-                )
-            # return serializer data
-            query_set = self.queryset.latest('item_packing_id')
-            serializer = self.serializer_class(query_set, context={'request': request})
-            serializer_data = serializer.data
-            return Response({'item_packing': serializer_data})
+                    for inline_items in obj['inline_items']:
+                        serial_no = inline_items['serial_no']
+                        tag_no = inline_items['tag_no']
+                        inline_item_list_id = inline_items['inline_item_id']
+                        ItemPackingInline.objects.create(
+                            inline_item_list_id_id=inline_item_list_id,
+                            item_pack_id=item_packing,
+                            serial_no=serial_no,
+                            tag_no=tag_no,
+                            box_no_manual=1,
+                            created_by_id=request.user.id,
+                            updated_by_id=request.user.id,
+                        )
+                        InlineItemList.objects.filter(inline_item_id=inline_item_list_id).update(packed_flag=True)
+                # creating MasterItemList
+                update_list = []
+                for obj in data['item_list']:
+                    item_obj = MasterItemList.objects.get(item_id=obj['item_id'])
+                    item_obj.packed_quantity = obj['packed_qty'] + obj['entered_qty']
+                    packed_qty = obj['packed_qty'] + obj['entered_qty']
+                    if packed_qty == obj['quantity']:
+                        item_obj.status = "packed"
+                        item_obj.packing_flag = 4
+                        item_obj.status_no = 5
+                    # appending latest records
+                    update_list.append(item_obj)
+                MasterItemList.objects.bulk_update(update_list,
+                                                   ['packed_quantity', 'status', 'packing_flag', 'status_no'])
+                # update the dispatch advice status
+                master_list = MasterItemList.objects.filter(dil_id=data['dil_id'], status_no__lte=4).count()
+                if master_list == 0:
+                    dispatch.update(
+                        dil_status="Packed ,Ready For Load ",
+                        dil_status_no=11, packed_flag=True,
+                        packed_date=datetime.datetime.now()
+                    )
+                # return serializer data
+                query_set = self.queryset.latest('item_packing_id')
+                serializer = self.serializer_class(query_set, context={'request': request})
+                serializer_data = serializer.data
+                return Response({'item_packing': serializer_data})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['post'], detail=False, url_path='add_box_into_box')
     def add_box_into_box(self, request, *args, **kwargs):
         try:
-            data = request.data
-            box_list = data['box_list']
-            box_code = data['box_code']
-            for box in box_list:
-                box_details = BoxDetails.objects.filter(box_details_id=box["box_details_id"])
-                box_details.update(parent_box=box_code, main_box=False)
-            return Response({'message': 'Box code updated Successfully'}, status=status.HTTP_200_OK)
+            with transaction.atomic():
+                data = request.data
+                box_list = data['box_list']
+                box_code = data['box_code']
+                for box in box_list:
+                    box_details = BoxDetails.objects.filter(box_details_id=box["box_details_id"])
+                    box_details.update(parent_box=box_code, main_box=False)
+                return Response({'message': 'Box code updated Successfully'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import status
@@ -25,34 +26,35 @@ class WorkFLowTypeViewSet(viewsets.ModelViewSet):
         return Response(serializer_data)
 
     def create(self, request, *args, **kwargs):
-        data = request.data
-        request_data = {
-            "wf_name": data['wf_name'],
-            "slug_name": data['slug_name'],
-            "total_level": data['flow_details'][-1]['level'],
-        }
-        serializer = WorkFlowTypeSerializer(data=request_data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            serializer_data = serializer.data
-            # Create WorkFlowControl and WorkFlowEmployees objects
-            for val in data['flow_details']:
-                WorkFlowControl.objects.create(
-                    wf_id_id=serializer_data['wf_id'],
-                    approver=val['approver'],
-                    level=val['level'],
-                    parallel=val['parallel'],
-                    created_by_id=request.user.id
-                )
-                # Fetch latest wfc_id
-                wfc_id = WorkFlowControl.objects.values('wfc_id').latest('wfc_id')['wfc_id']
-                # Create WorkFlowEmployees objects
-                WorkFlowEmployees.objects.create(
-                    wfc_id_id=wfc_id,
-                    emp_id=val['emp_id'],
-                    created_by_id=request.user.id
-                )
-            return Response(serializer_data)
+        with transaction.atomic():
+            data = request.data
+            request_data = {
+                "wf_name": data['wf_name'],
+                "slug_name": data['slug_name'],
+                "total_level": data['flow_details'][-1]['level'],
+            }
+            serializer = WorkFlowTypeSerializer(data=request_data, context={'request': request})
+            if serializer.is_valid():
+                serializer.save()
+                serializer_data = serializer.data
+                # Create WorkFlowControl and WorkFlowEmployees objects
+                for val in data['flow_details']:
+                    WorkFlowControl.objects.create(
+                        wf_id_id=serializer_data['wf_id'],
+                        approver=val['approver'],
+                        level=val['level'],
+                        parallel=val['parallel'],
+                        created_by_id=request.user.id
+                    )
+                    # Fetch latest wfc_id
+                    wfc_id = WorkFlowControl.objects.values('wfc_id').latest('wfc_id')['wfc_id']
+                    # Create WorkFlowEmployees objects
+                    WorkFlowEmployees.objects.create(
+                        wfc_id_id=wfc_id,
+                        emp_id=val['emp_id'],
+                        created_by_id=request.user.id
+                    )
+                return Response(serializer_data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, *args, **kwargs):
@@ -86,20 +88,21 @@ class WorkflowAccessViewSet(viewsets.ModelViewSet):
         return Response(response_data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
-        data = request.data
-        serializer = WorkFlowAccessSerializer(data=data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            serializer_data = serializer.data
-            # Create WorkFlowDeptEmp objects
-            for obj in data['data']:
-                for emp in obj['emp_ids']:
-                    WorkFlowDeptEmp.objects.create(
-                        wfa_id_id=serializer_data['wfa_id'],
-                        type=obj['type'], emp_id=emp,
-                        created_by_id=request.user.id
-                    )
-            return Response(serializer_data)
+        with transaction.atomic():
+            data = request.data
+            serializer = WorkFlowAccessSerializer(data=data, context={'request': request})
+            if serializer.is_valid():
+                serializer.save()
+                serializer_data = serializer.data
+                # Create WorkFlowDeptEmp objects
+                for obj in data['data']:
+                    for emp in obj['emp_ids']:
+                        WorkFlowDeptEmp.objects.create(
+                            wfa_id_id=serializer_data['wfa_id'],
+                            type=obj['type'], emp_id=emp,
+                            created_by_id=request.user.id
+                        )
+                return Response(serializer_data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, *args, **kwargs):
@@ -124,22 +127,18 @@ class WorkflowAccessViewSet(viewsets.ModelViewSet):
         return Response(serializer)
 
     def update(self, request, *args, **kwargs):
-        data = request.data
-        queries = self.get_queryset().filter(wfa_id=kwargs['pk']).first()
-        serializer = WorkFlowAccessSerializer(queries, data=data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            serializer_data = serializer.data
-
-            WorkFlowDeptEmp.objects.filter(wfa_id_id=data['wfa_id']).delete()
-
-            for obj in data['data']:
-                for emp in obj['emp_ids']:
-                    WorkFlowDeptEmp.objects.create(wfa_id_id=data['wfa_id'],
-                                                   type=obj['type'], emp_id=emp,
-                                                   created_by_id=request.user.id)
-
-            return Response(serializer_data)
+        with transaction.atomic():
+            data = request.data
+            queries = self.get_queryset().filter(wfa_id=kwargs['pk']).first()
+            serializer = WorkFlowAccessSerializer(queries, data=data, context={'request': request})
+            if serializer.is_valid():
+                serializer.save()
+                serializer_data = serializer.data
+                WorkFlowDeptEmp.objects.filter(wfa_id_id=data['wfa_id']).delete()
+                for obj in data['data']:
+                    for emp in obj['emp_ids']:
+                        WorkFlowDeptEmp.objects.create(wfa_id_id=data['wfa_id'],type=obj['type'], emp_id=emp,created_by_id=request.user.id)
+                return Response(serializer_data)
         return Response(False)
 
     @action(methods=['post'], detail=False, url_path='workflow_filter')
@@ -259,25 +258,26 @@ class WorkFlowDaApproversViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], url_path='create_wf_da_approval')
     def create_wf_da_approval(self, request, *args, **kwargs):
         try:
-            dil_id = request.data['dil_id']
-            wf_id = request.data['wf_id']
-            approval_list = request.data['approval']
-            for item in approval_list:
-                data = {
-                    'dil_id': dil_id,
-                    'wf_id': wf_id,
-                    'approver': item['approver'],
-                    'level': item['level'],
-                    'parallel': item['parallel'],
-                    'emp_id': item['emp_id'],
-                    'status': item['status'],
-                }
-                serializer = WorkFlowDaApproversSerializer(data=data, context={'request': request})
-                if serializer.is_valid():
-                    serializer.save()
-                else:
-                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            return Response({'message': 'Workflow DA Approval created successfully'}, status=status.HTTP_201_CREATED)
+           with transaction.atomic():
+               dil_id = request.data['dil_id']
+               wf_id = request.data['wf_id']
+               approval_list = request.data['approval']
+               for item in approval_list:
+                   data = {
+                       'dil_id': dil_id,
+                       'wf_id': wf_id,
+                       'approver': item['approver'],
+                       'level': item['level'],
+                       'parallel': item['parallel'],
+                       'emp_id': item['emp_id'],
+                       'status': item['status'],
+                   }
+                   serializer = WorkFlowDaApproversSerializer(data=data, context={'request': request})
+                   if serializer.is_valid():
+                       serializer.save()
+                   else:
+                       return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+               return Response({'message': 'Workflow DA Approval created successfully'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

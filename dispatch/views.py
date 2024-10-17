@@ -114,38 +114,39 @@ class DispatchInstructionViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], detail=False, url_path='complete_dil_update')
     def complete_dil_update(self, request, *args, **kwargs):
         try:
-            payload = request.data
-            dil_id = payload.get("dil_id")
-            data = DispatchInstruction.objects.values().get(dil_id=dil_id)
-            if not data:
-                return Response({'message': 'DA not found', 'status': status.HTTP_204_NO_CONTENT})
+            with transaction.atomic():
+                payload = request.data
+                dil_id = payload.get("dil_id")
+                data = DispatchInstruction.objects.values().get(dil_id=dil_id)
+                if not data:
+                    return Response({'message': 'DA not found', 'status': status.HTTP_204_NO_CONTENT})
 
-            dil_filter = DispatchInstruction.objects.filter(dil_id=dil_id).values('dil_stage')[0]['dil_stage']
-            workflow_da_list = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id, level=1).values()
-            for wf in workflow_da_list:
-                DAUserRequestAllocation.objects.create(
+                dil_filter = DispatchInstruction.objects.filter(dil_id=dil_id).values('dil_stage')[0]['dil_stage']
+                workflow_da_list = WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id, level=1).values()
+                for wf in workflow_da_list:
+                    DAUserRequestAllocation.objects.create(
+                        dil_id_id=dil_id,
+                        emp_id_id=wf['emp_id'],
+                        status="pending",
+                        approver_stage=wf['approver'],
+                        approver_level=wf['level'],
+                        created_by_id=request.user.id
+                    )
+                # create DAUserRequestAllocation for each approver
+                DAAuthThreads.objects.create(
                     dil_id_id=dil_id,
-                    emp_id_id=wf['emp_id'],
-                    status="pending",
-                    approver_stage=wf['approver'],
-                    approver_level=wf['level'],
+                    emp_id=request.user.id,
+                    remarks='DIL modified',
+                    status="DIL modified",
                     created_by_id=request.user.id
                 )
-            # create DAUserRequestAllocation for each approver
-            DAAuthThreads.objects.create(
-                dil_id_id=dil_id,
-                emp_id=request.user.id,
-                remarks='DIL modified',
-                status="DIL modified",
-                created_by_id=request.user.id
-            )
-            # update the dil_stage
-            DispatchInstruction.objects.filter(dil_id=dil_id).update(
-                submitted_date=datetime.now(),
-                dil_status_no=1,
-                dil_status='DIL modified'
-            )
-            return Response({'message': 'DA completed successfully', 'status': status.HTTP_201_CREATED})
+                # update the dil_stage
+                DispatchInstruction.objects.filter(dil_id=dil_id).update(
+                    submitted_date=datetime.now(),
+                    dil_status_no=1,
+                    dil_status='DIL modified'
+                )
+                return Response({'message': 'DA completed successfully', 'status': status.HTTP_201_CREATED})
         except Exception as e:
             return Response({'message': str(e), 'status': status.HTTP_400_BAD_REQUEST})
 
@@ -489,9 +490,7 @@ class SAPDispatchInstructionViewSet(viewsets.ModelViewSet):
     def dil_based_on_delivery(self, request, *args, **kwargs):
         try:
             delivery_no = request.data['delivery']
-            dil = SAPDispatchInstruction.objects.filter(delivery=delivery_no).distinct('reference_doc_item').order_by(
-                '-reference_doc_item')
-            # latest_records = SAPDispatchInstruction.objects.filter(delivery=delivery_no).annotate(max_id=Max('id')).filter(id=F('max_id'))
+            dil = SAPDispatchInstruction.objects.filter(delivery=delivery_no).distinct('reference_doc_item').order_by('-reference_doc_item')
             if not dil:
                 return Response({'message': 'DIL Not found for this delivery', 'status': status.HTTP_204_NO_CONTENT})
             serializer = SAPDispatchInstructionSerializer(dil, many=True)
@@ -651,39 +650,40 @@ class DispatchBillDetailsViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], url_path='create_bill')
     def create_bill(self, request, *args, **kwargs):
         try:
-            payload = request.data
-            dil_id = payload.get("dil_id")
-            item_list = payload.get("item_list", [])
-            dil = DispatchInstruction.objects.filter(dil_id=dil_id).first()
-            if not dil:
-                return Response({'message': 'DIL not found', 'status': status.HTTP_204_NO_CONTENT})
-            for item_data in item_list:
-                material_description = item_data.get("material_discription")
-                material_no = item_data.get("material_no")
-                ms_code = item_data.get("ms_code")
-                linkage_no = item_data.get("linkage_no")
-                quantity = item_data.get("sales_quantity")
-                packed_quantity = item_data.get("packed_quantity")
-                item_price = item_data.get("sales_item_price")
-                tax_amount = item_data.get("tax_invoice_total_tax_value")
-                total_amount = item_data.get("tax_invoice_total_value")
-                total_amount_with_tax = total_amount
-                # Create DispatchBillDetails instance
-                DispatchBillDetails.objects.create(
-                    dil_id=dil,
-                    material_description=material_description,
-                    material_no=material_no,
-                    ms_code=ms_code,
-                    linkage_no=linkage_no,
-                    quantity=quantity,
-                    packed_quantity=packed_quantity,
-                    item_price=item_price,
-                    tax_amount=tax_amount,
-                    total_amount=total_amount,
-                    total_amount_with_tax=total_amount_with_tax,
-                    created_by=request.user
-                )
-            return Response({'message': 'Bill created successfully', 'status': status.HTTP_201_CREATED})
+            with transaction.atomic():
+                payload = request.data
+                dil_id = payload.get("dil_id")
+                item_list = payload.get("item_list", [])
+                dil = DispatchInstruction.objects.filter(dil_id=dil_id).first()
+                if not dil:
+                    return Response({'message': 'DIL not found', 'status': status.HTTP_204_NO_CONTENT})
+                for item_data in item_list:
+                    material_description = item_data.get("material_discription")
+                    material_no = item_data.get("material_no")
+                    ms_code = item_data.get("ms_code")
+                    linkage_no = item_data.get("linkage_no")
+                    quantity = item_data.get("sales_quantity")
+                    packed_quantity = item_data.get("packed_quantity")
+                    item_price = item_data.get("sales_item_price")
+                    tax_amount = item_data.get("tax_invoice_total_tax_value")
+                    total_amount = item_data.get("tax_invoice_total_value")
+                    total_amount_with_tax = total_amount
+                    # Create DispatchBillDetails instance
+                    DispatchBillDetails.objects.create(
+                        dil_id=dil,
+                        material_description=material_description,
+                        material_no=material_no,
+                        ms_code=ms_code,
+                        linkage_no=linkage_no,
+                        quantity=quantity,
+                        packed_quantity=packed_quantity,
+                        item_price=item_price,
+                        tax_amount=tax_amount,
+                        total_amount=total_amount,
+                        total_amount_with_tax=total_amount_with_tax,
+                        created_by=request.user
+                    )
+                return Response({'message': 'Bill created successfully', 'status': status.HTTP_201_CREATED})
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
@@ -803,73 +803,75 @@ class MasterItemListViewSet(viewsets.ModelViewSet):
             return Response({'message': str(e), 'status': status.HTTP_400_BAD_REQUEST})
 
     @action(detail=False, methods=['post'], url_path='create_master_multi_item')
-    def create_master_multi_item_(self, request, *args, **kwargs):
+    def create_master_multi_item(self, request, *args, **kwargs):
         try:
-            payload = request.data
-            dil_id = payload.get("dil_id")
-            item_list = payload.get("item_list", [])
-            dil = DispatchInstruction.objects.filter(dil_id=dil_id).first()
-            if not dil:
-                return Response({'message': 'DIL not found', 'status': status.HTTP_204_NO_CONTENT})
-            for item_data in item_list:
-                material_description = item_data.get("material_discription")
-                material_no = item_data.get("material_no")
-                ms_code = item_data.get("ms_code")
-                linkage_no = item_data.get("linkage_no")
-                quantity = item_data.get("sales_quantity")
-                plant = item_data.get("plant")
-                so_no = item_data.get("reference_doc")
-                storage_location = item_data.get("s_loc")
-                item_no = item_data.get("reference_doc_item")
-                unit_of_measurement = item_data.get("unit_delivery")
-                # Create DispatchBillDetails instance
-                MasterItemList.objects.create(
-                    dil_id=dil,
-                    item_no=item_no,
-                    material_no=material_no,
-                    ms_code=ms_code,
-                    linkage_no=linkage_no,
-                    quantity=quantity,
-                    plant=plant,
-                    s_loc=storage_location,
-                    material_description=material_description,
-                    unit_of_measurement=unit_of_measurement,
-                    so_no=so_no,
-                    created_by=request.user
-                )
-            return Response({'message': 'Multi Master List created !', 'status': status.HTTP_201_CREATED})
+            with transaction.atomic():
+                payload = request.data
+                dil_id = payload.get("dil_id")
+                item_list = payload.get("item_list", [])
+                dil = DispatchInstruction.objects.filter(dil_id=dil_id).first()
+                if not dil:
+                    return Response({'message': 'DIL not found', 'status': status.HTTP_204_NO_CONTENT})
+                for item_data in item_list:
+                    material_description = item_data.get("material_discription")
+                    material_no = item_data.get("material_no")
+                    ms_code = item_data.get("ms_code")
+                    linkage_no = item_data.get("linkage_no")
+                    quantity = item_data.get("sales_quantity")
+                    plant = item_data.get("plant")
+                    so_no = item_data.get("reference_doc")
+                    storage_location = item_data.get("s_loc")
+                    item_no = item_data.get("reference_doc_item")
+                    unit_of_measurement = item_data.get("unit_delivery")
+                    # Create DispatchBillDetails instance
+                    MasterItemList.objects.create(
+                        dil_id=dil,
+                        item_no=item_no,
+                        material_no=material_no,
+                        ms_code=ms_code,
+                        linkage_no=linkage_no,
+                        quantity=quantity,
+                        plant=plant,
+                        s_loc=storage_location,
+                        material_description=material_description,
+                        unit_of_measurement=unit_of_measurement,
+                        so_no=so_no,
+                        created_by=request.user
+                    )
+                return Response({'message': 'Multi Master List created !', 'status': status.HTTP_201_CREATED})
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'], url_path='verify_store_master_item')
     def verify_store_master_item(self, request, *args, **kwargs):
         try:
-            dil_no = request.data['dil_id']
-            dil_status = request.data['dil_status']
-            dil_status_no = request.data['dil_status_no']
-            stature = request.data['status']
-            remarks = request.data['remarks']
-            item_list = request.data['item_list']
-            dil = DispatchInstruction.objects.filter(dil_id=dil_no)
-            if dil is None:
-                return Response({'message': 'DA not found', 'status': status.HTTP_204_NO_CONTENT})
-            if dil.exists():
-                if stature == "verified":
-                    dil.update(dil_status_no=dil_status_no, dil_status=dil_status)
-                    for item in item_list:
-                        master = MasterItemList.objects.filter(item_id=item['item_id'])
-                        master.update(verified_flag=True, verified_by=request.user.id, verified_at=datetime.now(),
-                                      status_no=2)
-                elif stature == "modified":
-                    dil.update(dil_status_no=dil_status_no, dil_status=dil_status)
-                DAAuthThreads.objects.create(
-                    dil_id_id=dil_no,
-                    emp_id=request.user.id,
-                    remarks=remarks,
-                    status=stature,
-                    approver='Verifier'
-                )
-                return Response({'message': 'Store Master Item Verified', 'status': status.HTTP_201_CREATED})
+            with transaction.atomic():
+                dil_no = request.data['dil_id']
+                dil_status = request.data['dil_status']
+                dil_status_no = request.data['dil_status_no']
+                stature = request.data['status']
+                remarks = request.data['remarks']
+                item_list = request.data['item_list']
+                dil = DispatchInstruction.objects.filter(dil_id=dil_no)
+                if dil is None:
+                    return Response({'message': 'DA not found', 'status': status.HTTP_204_NO_CONTENT})
+                if dil.exists():
+                    if stature == "verified":
+                        dil.update(dil_status_no=dil_status_no, dil_status=dil_status)
+                        for item in item_list:
+                            master = MasterItemList.objects.filter(item_id=item['item_id'])
+                            master.update(verified_flag=True, verified_by=request.user.id, verified_at=datetime.now(),
+                                          status_no=2)
+                    elif stature == "modified":
+                        dil.update(dil_status_no=dil_status_no, dil_status=dil_status)
+                    DAAuthThreads.objects.create(
+                        dil_id_id=dil_no,
+                        emp_id=request.user.id,
+                        remarks=remarks,
+                        status=stature,
+                        approver='Verifier'
+                    )
+                    return Response({'message': 'Store Master Item Verified', 'status': status.HTTP_201_CREATED})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1532,51 +1534,52 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
             data = request.data
             stature = data['status']
             dil_id = data['dil_id']
+            # Transaction
+            with transaction.atomic():
+                if stature == "modification":
+                    DispatchInstruction.objects.filter(dil_id=dil_id).update(current_level=1, status="modification")
+                    DAUserRequestAllocation.objects.filter(dil_id_id=dil_id).delete()
 
-            if stature == "modification":
-                DispatchInstruction.objects.filter(dil_id=dil_id).update(current_level=1, status="modification")
-                DAUserRequestAllocation.objects.filter(dil_id_id=dil_id).delete()
+                    WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id).update(status="pending")
+                    WorkFlowDaApprovers.objects.create(
+                        dil_id_id=dil_id,
+                        emp_id=request.user.id,
+                        remarks=data['remarks'],
+                        status="Sent for Modification"
+                    )
 
-                WorkFlowDaApprovers.objects.filter(dil_id_id=dil_id).update(status="pending")
-                WorkFlowDaApprovers.objects.create(
-                    dil_id_id=dil_id,
-                    emp_id=request.user.id,
-                    remarks=data['remarks'],
-                    status="Sent for Modification"
-                )
+                elif stature == "reject":
+                    DispatchInstruction.objects.filter(dil_id=dil_id).update(current_level=1, status="rejected")
+                    DAUserRequestAllocation.objects.filter(dil_id_id=dil_id, emp_id=request.user.id).update(
+                        status="rejected")
+                    DAAuthThreads.objects.create(
+                        dil_id_id=dil_id,
+                        emp_id=request.user.id,
+                        remarks=data['remarks'],
+                        status="Rejected"
+                    )
 
-            elif stature == "reject":
-                DispatchInstruction.objects.filter(dil_id=dil_id).update(current_level=1, status="rejected")
-                DAUserRequestAllocation.objects.filter(dil_id_id=dil_id, emp_id=request.user.id).update(
-                    status="rejected")
-                DAAuthThreads.objects.create(
-                    dil_id_id=dil_id,
-                    emp_id=request.user.id,
-                    remarks=data['remarks'],
-                    status="Rejected"
-                )
+                elif stature == "hold":
+                    DispatchInstruction.objects.filter(dil_id=dil_id).update(status="hold")
+                    DAAuthThreads.objects.create(
+                        dil_id_id=dil_id,
+                        emp_id=request.user.id,
+                        remarks=data['remarks'],
+                        status="Hold")
 
-            elif stature == "hold":
-                DispatchInstruction.objects.filter(dil_id=dil_id).update(status="hold")
-                DAAuthThreads.objects.create(
-                    dil_id_id=dil_id,
-                    emp_id=request.user.id,
-                    remarks=data['remarks'],
-                    status="Hold")
-
-            else:
-                DAAuthThreads.objects.create(
-                    da_id_id=data['da_id'],
-                    emp_id=request.user.id,
-                    remarks=data['remarks'],
-                    status="packing acknowledged"
-                )
-                DispatchInstruction.objects.filter(da_id=data['da_id']).update(
-                    packing_approver_flag=True,
-                    status="packing acknowledged",
-                    da_status_number=4
-                )
-            return Response({'message': 'DA Packing Approved', 'status': status.HTTP_201_CREATED})
+                else:
+                    DAAuthThreads.objects.create(
+                        da_id_id=data['da_id'],
+                        emp_id=request.user.id,
+                        remarks=data['remarks'],
+                        status="packing acknowledged"
+                    )
+                    DispatchInstruction.objects.filter(da_id=data['da_id']).update(
+                        packing_approver_flag=True,
+                        status="packing acknowledged",
+                        da_status_number=4
+                    )
+                return Response({'message': 'DA Packing Approved', 'status': status.HTTP_201_CREATED})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1679,17 +1682,19 @@ class MultiFileAttachmentViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], url_path='create_multi_file_attachment')
     def create_multi_file_attachment(self, request, *args, **kwargs):
         try:
-            for key, file in request.FILES.items():
-                MultiFileAttachment.objects.create(
-                    dil_id_id=request.data['da_id'],
-                    module_id=request.data['module_id'],
-                    file=file,
-                    file_type_id=int(key),
-                    module_name=request.data['module_name'],
-                    created_by=request.user,
-                    updated_by=request.user
-                )
-                return Response({'message': 'Multiple File uploaded successfully', 'status': status.HTTP_201_CREATED})
+            with transaction.atomic():
+                for key, file in request.FILES.items():
+                    MultiFileAttachment.objects.create(
+                        dil_id_id=request.data['da_id'],
+                        module_id=request.data['module_id'],
+                        file=file,
+                        file_type_id=int(key),
+                        module_name=request.data['module_name'],
+                        created_by=request.user,
+                        updated_by=request.user
+                    )
+                    return Response(
+                        {'message': 'Multiple File uploaded successfully', 'status': status.HTTP_201_CREATED})
         except Exception as e:
 
             return Response({'message': str(e), 'status': status.HTTP_400_BAD_REQUEST})

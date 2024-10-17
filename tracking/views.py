@@ -256,7 +256,6 @@ class TruckListViewSet(viewsets.ModelViewSet):
             return Response({'error': 'TruckList not found'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = TruckTransportationUpdateSerializer(truck_list, data=request.data)
-
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -310,7 +309,7 @@ class TruckListViewSet(viewsets.ModelViewSet):
                             dispatch = DispatchInstruction.objects.get(dil_id=dil_id)
                             dispatch.delivery_terms_id = mode_of_delivery
                             dispatch.freight_basis_id = freight_mode
-                            dispatch.dil_status_no = 1
+                            dispatch.dil_status_no = 12
                             dispatch.dil_status = 'Truck Allocated'
                             dispatch.save()
                             # create Truck DIl Map
@@ -527,15 +526,15 @@ class TruckDIlMappingViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], detail=False, url_path='create_truck_mapping_on_dil')
     def create_truck_mapping_on_dil(self, request):
         try:
-            dil_ids = request.data['dil_ids']
-            truck_list_id = request.data['truck_list_id']
-            truck_list = TruckList.objects.get(id=truck_list_id)
-            for dil_id in dil_ids:
-                dispatch = DispatchInstruction.objects.get(dil_id=dil_id)
-                truck_mapping = TruckDilMappingDetails(truck_list_id=truck_list, dil_id=dispatch,
-                                                       created_by=request.user)
-                truck_mapping.save()
-                return Response({'message': 'Truck Mapping Created'}, status=status.HTTP_201_CREATED)
+            with transaction.atomic():
+                dil_ids = request.data['dil_ids']
+                truck_list_id = request.data['truck_list_id']
+                truck_list = TruckList.objects.get(id=truck_list_id)
+                for dil_id in dil_ids:
+                    dispatch = DispatchInstruction.objects.get(dil_id=dil_id)
+                    truck_mapping = TruckDilMappingDetails(truck_list_id=truck_list, dil_id=dispatch, created_by=request.user)
+                    truck_mapping.save()
+                    return Response({'message': 'Truck Mapping Created'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -681,44 +680,41 @@ class TruckLoadingDetailsViewSet(viewsets.ModelViewSet):
             dil_id = data['dil_id']
             box_code = data['box_code']
             truck_list_id = data['truck_list_id']
+            # transaction
+            with transaction.atomic():
+                truck_loading_details_obj = {
+                    'dil_id': dil_id,
+                    'truck_list_id': truck_list_id,
+                    'box_code': box_code
+                }
 
-            # Create Loading Details
-            truck_loading_details_obj = {
-                'dil_id': dil_id,
-                'truck_list_id': truck_list_id,
-                'box_code': box_code
-            }
+                # Remove Truck Loading Details
+                loading = TruckLoadingDetails.objects.filter(**truck_loading_details_obj)
+                loading.delete()
 
-            # Remove Truck Loading Details
-            loading = TruckLoadingDetails.objects.filter(**truck_loading_details_obj)
-            loading.delete()
+                # Update Box Details
+                box_details = BoxDetails.objects.filter(box_code=box_code)
+                if box_details.exists():
+                    box_details.update(loaded_flag=False)
 
-            # Update Box Details
-            box_details = BoxDetails.objects.filter(box_code=box_code)
-            if box_details.exists():
-                box_details.update(loaded_flag=False)
+                # Update Truck List status & Dispatch status
+                truck_list_in_loading = TruckLoadingDetails.objects.filter(truck_list_id=truck_list_id).exists()
+                if not truck_list_in_loading:
+                    TruckList.objects.filter(id=truck_list_id).update(
+                        loaded_flag=False,
+                        tracking_status=1,
+                        status='Not Loaded',
+                        no_of_boxes=0
+                    )
 
-            # Update Truck List status & Dispatch status
-            truck_list_in_loading = TruckLoadingDetails.objects.filter(truck_list_id=truck_list_id).exists()
-            if not truck_list_in_loading:
-                TruckList.objects.filter(id=truck_list_id).update(
+                DispatchInstruction.objects.filter(dil_id=dil_id).update(
+                    dil_status_no=13,
+                    dil_status='Loading In Progress',
                     loaded_flag=False,
-                    tracking_status=1,
-                    status='Not Loaded',
-                    no_of_boxes=0
                 )
-
-            DispatchInstruction.objects.filter(dil_id=dil_id).update(
-                dil_status_no=13,
-                dil_status='Loading In Progress',
-                loaded_flag=False,
-            )
-
-            return Response({'message': 'Deletion done successfully'}, status=status.HTTP_200_OK)
-
+                return Response({'message': 'Deletion done successfully'}, status=status.HTTP_200_OK)
         except KeyError as e:
             return Response({'error': f'Missing key: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
-
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1036,30 +1032,32 @@ class GatePassInfoViewSet(viewsets.ModelViewSet):
     def update_gate_info_for_checkout(self, request, *args, **kwargs):
         try:
             data = request.data
-            if data:
-                gate_info = GatePassInfo.objects.filter(id=data['id'], is_active=True)
-                truck_info_ids = GatePassTruckDetails.objects.filter(gate_info=data['id']).values('truck_info')
-                truck_lists = TruckList.objects.filter(id__in=truck_info_ids)
-                gate_info.update(
-                    checkout_date=datetime.date.today(),
-                    checkout_remarks=data['checkout_remarks'],
-                    status_no=3
-                )
-                GatePassAuthThreads.objects.create(
-                    gate_pass_info_id=data['id'],
-                    emp=request.user,
-                    status='Checkout',
-                    remarks=data['checkout_remarks']
-                )
-                truck_lists.update(status='Checkout', tracking_status=4)
-                truck_lists_ids = truck_lists.values_list('id', flat=True)
-                truck_dil_map = TruckDilMappingDetails.objects.filter(truck_list_id_id__in=truck_lists_ids)
-                dil_ids = truck_dil_map.values_list('dil_id', flat=True)
-                DispatchInstruction.objects.filter(dil_id__in=dil_ids).update(
-                    dil_status_no=17,
-                    dil_status='Checkout From YIL',
-                )
-                return Response({'message': 'Gate Checkout is updated!'}, status=status.HTTP_200_OK)
+            with transaction.atomic():
+                if data:
+                    gate_info = GatePassInfo.objects.filter(id=data['id'], is_active=True)
+                    truck_info_ids = GatePassTruckDetails.objects.filter(gate_info=data['id']).values('truck_info')
+                    truck_lists = TruckList.objects.filter(id__in=truck_info_ids)
+                    gate_info.update(
+                        checkout_date=datetime.date.today(),
+                        checkout_remarks=data['checkout_remarks'],
+                        status_no=3
+                    )
+                    GatePassAuthThreads.objects.create(
+                        gate_pass_info_id=data['id'],
+                        emp=request.user,
+                        status='Checkout',
+                        remarks=data['checkout_remarks']
+                    )
+                    truck_lists.update(status='Checkout', tracking_status=4)
+                    truck_lists_ids = truck_lists.values_list('id', flat=True)
+                    truck_dil_map = TruckDilMappingDetails.objects.filter(truck_list_id_id__in=truck_lists_ids)
+                    dil_ids = truck_dil_map.values_list('dil_id', flat=True)
+                    DispatchInstruction.objects.filter(dil_id__in=dil_ids).update(
+                        dil_status_no=17,
+                        dil_status='Checkout From YIL',
+                    )
+                    return Response({'message': 'Gate Checkout is updated!'}, status=status.HTTP_200_OK)
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1181,8 +1179,7 @@ class GatePassApproverDetailsViewSet(viewsets.ModelViewSet):
     def gate_pass_approver_details_by_user(self, request, *args, **kwargs):
         try:
             user = request.user
-            gate_info_ids = GatePassApproverDetails.objects.filter(emp=user, approver_flag=False).values_list(
-                'gate_info', flat=True)
+            gate_info_ids = GatePassApproverDetails.objects.filter(emp=user, approver_flag=False).values_list('gate_info', flat=True)
             gate_pass_info = GatePassInfo.objects.filter(id__in=gate_info_ids, is_active=True)
             gate_pass_info_serializer = GatePassInfoSerializer(gate_pass_info, many=True)
             for gate_pass_info_data in gate_pass_info_serializer.data:
@@ -1217,25 +1214,26 @@ class GatePassApproverDetailsViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], detail=False, url_path='update_gate_pass_approver_details')
     def update_gate_pass_approver_details(self, request, *args, **kwargs):
         try:
-            data = request.data
-            gate_pass_id = data['gate_pass_id']
-            remarks = data['remarks']
-            gate_pass_info = GatePassInfo.objects.filter(id=gate_pass_id, is_active=True)
-            gate_pass_info.update(status_no=2, approve_by=request.user, approved_date=timezone.now())
-            gate_pass_approver = GatePassApproverDetails.objects.filter(gate_info=gate_pass_id)
-            gate_pass_approver.update(
-                approver_status="Gate Pass Approved",
-                status_no=2,
-                approver_flag=True,
-                remarks=remarks
-            )
-            GatePassAuthThreads.objects.create(
-                gate_pass_info_id=gate_pass_id,
-                emp=request.user,
-                status='Approved',
-                remarks=remarks,
-                created_by=request.user,
-            )
-            return Response({'message': 'Update Gate Approver Done!'}, status=status.HTTP_200_OK)
+            with transaction.atomic():
+                data = request.data
+                gate_pass_id = data['gate_pass_id']
+                remarks = data['remarks']
+                gate_pass_info = GatePassInfo.objects.filter(id=gate_pass_id, is_active=True)
+                gate_pass_info.update(status_no=2, approve_by=request.user, approved_date=timezone.now())
+                gate_pass_approver = GatePassApproverDetails.objects.filter(gate_info=gate_pass_id)
+                gate_pass_approver.update(
+                    approver_status="Gate Pass Approved",
+                    status_no=2,
+                    approver_flag=True,
+                    remarks=remarks
+                )
+                GatePassAuthThreads.objects.create(
+                    gate_pass_info_id=gate_pass_id,
+                    emp=request.user,
+                    status='Approved',
+                    remarks=remarks,
+                    created_by=request.user,
+                )
+                return Response({'message': 'Update Gate Approver Done!'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
