@@ -783,10 +783,25 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
 
         def shipment_header(canvas, y_position):
             canvas.setFont("Helvetica", 7)
-
+            # Prepare the ship-to information with line wrapping for the address field
             ship_to = []
             ship_to.append(dispatch.ship_to_party_name)
-            ship_to.append(dispatch.ship_to_address)
+            # ship_to.append(dispatch.ship_to_address)
+            # Custom splitting logic for address into two lines
+            address = dispatch.ship_to_address if dispatch.ship_to_address else ' '
+            if ',' in address:
+                # Find the last comma and split the address into two parts
+                split_index = address.rfind(',')
+                first_part = address[:split_index + 1]  # Include the comma
+                second_part = address[split_index + 1:].strip()  # Trim the second part and remove extra spaces
+                ship_to.append(first_part)
+                ship_to.append(second_part)
+            else:
+                # If no comma, just split at the 40-character mark as a fallback
+                wrapped_address = textwrap.fill(address, width=40)
+                ship_to.extend(wrapped_address.split('\n'))
+
+            # Other info
             ship_to.append(dispatch.ship_to_city)
             ship_to.append(dispatch.ship_to_postal_code)
             ship_to.append(dispatch.ship_to_country)
@@ -801,7 +816,19 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
 
             bill_to = []
             bill_to.append(dispatch.bill_to_party_name)
-            bill_to.append(dispatch.bill_to_address)
+            # bill_to.append(dispatch.bill_to_address)
+            # Custom splitting logic for address into two lines
+            address = dispatch.bill_to_address if dispatch.bill_to_address else ' '
+            if ',' in address:
+                split_index = address.rfind(',')
+                first_part = address[:split_index + 1]
+                second_part = address[split_index + 1:].strip()
+                bill_to.append(first_part)
+                bill_to.append(second_part)
+            else:
+                wrapped_address = textwrap.fill(address, width=40)
+                bill_to.extend(wrapped_address.split('\n'))
+            # other info
             bill_to.append(dispatch.bill_to_country)
             bill_to.append(dispatch.bill_to_postal_code)
             bill_to.append(dispatch.bill_to_city)
@@ -883,7 +910,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                 draw_wrapped_string(canvas, start_text, y_position - 30, "GR W/T:" + str(datas['gross_weight']) + "kg",
                                     4 * inch)
                 draw_wrapped_string(canvas, start_text, y_position - 40, "Box No:" + str(datas['box_no']), 4 * inch)
-                draw_wrapped_string(canvas, start_text, y_position - 50, "B-Type:" + str(datas['box_type']), 4 * inch)
+                # draw_wrapped_string(canvas, start_text, y_position - 50, "B-Type:" + str(datas['box_type']), 4 * inch)
                 canvas.setFont("Helvetica", 8)
                 for item_packing in datas['item_packing']:
                     if y_position < inch:
@@ -1136,7 +1163,22 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
 
             ship_to = []
             ship_to.append(dispatch.ship_to_party_name)
-            ship_to.append(dispatch.ship_to_address)
+            # ship_to.append(dispatch.ship_to_address)
+            # Check if ship_to_address is not None before processing it
+            address = dispatch.ship_to_address if dispatch.ship_to_address else ' '
+            if ',' in address:
+                # Find the last comma and split the address into two parts
+                split_index = address.rfind(',')
+                first_part = address[:split_index + 1]
+                second_part = address[split_index + 1:].strip()
+                ship_to.append(first_part)
+                ship_to.append(second_part)
+            else:
+                # If no comma, just split at the 40-character mark as a fallback
+                wrapped_address = textwrap.fill(address, width=40)
+                ship_to.extend(wrapped_address.split('\n'))
+
+            # Add the remaining ship-to details
             ship_to.append(dispatch.ship_to_city)
             ship_to.append(dispatch.ship_to_postal_code)
             ship_to.append(dispatch.ship_to_country)
@@ -1151,7 +1193,21 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
 
             bill_to = []
             bill_to.append(dispatch.bill_to_party_name)
-            bill_to.append(dispatch.bill_to_address)
+            # bill_to.append(dispatch.bill_to_address)
+            address = dispatch.bill_to_address if dispatch.bill_to_address else ' '
+            if ',' in address:
+                # Find the last comma and split the address into two parts
+                split_index = address.rfind(',')
+                first_part = address[:split_index + 1]
+                second_part = address[split_index + 1:].strip()
+                bill_to.append(first_part)
+                bill_to.append(second_part)
+            else:
+                # If no comma, just split at the 40-character mark as a fallback
+                wrapped_address = textwrap.fill(address, width=40)
+                bill_to.extend(wrapped_address.split('\n'))
+
+            # Add the remaining ship-to details
             bill_to.append(dispatch.bill_to_country)
             bill_to.append(dispatch.bill_to_postal_code)
             bill_to.append(dispatch.bill_to_city)
