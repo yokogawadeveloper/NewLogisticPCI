@@ -18,6 +18,7 @@ from barcode.writer import ImageWriter
 from PIL import Image
 from tracking.serializers import *
 from .serializers import *
+import textwrap
 
 
 # Create your views here.
