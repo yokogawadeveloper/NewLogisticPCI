@@ -1586,32 +1586,33 @@ class DILAuthThreadsViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], detail=False, url_path='packing_acknowledged')
     def packing_acknowledged(self, request):
         try:
-            dil_no = request.data['dil_id']
-            dil_status_no = request.data['dil_status_no']
-            dil_status = request.data['dil_status']
-            stature = request.data['status']
-            remarks = request.data['remarks']
-            dil = DispatchInstruction.objects.filter(dil_id=dil_no)
-            if dil.exists():
-                if stature == "modification":
-                    dil.update(dil_status_no=1, dil_status="modification")
-                else:
-                    dil.update(
-                        dil_status_no=dil_status_no,
-                        dil_status=dil_status,
-                        acknowledge_by=request.user.id,
-                        acknowledge_date=datetime.now()
+            with transaction.atomic():
+                dil_no = request.data['dil_id']
+                dil_status_no = request.data['dil_status_no']
+                dil_status = request.data['dil_status']
+                stature = request.data['status']
+                remarks = request.data['remarks']
+                dil = DispatchInstruction.objects.filter(dil_id=dil_no)
+                if dil.exists():
+                    if stature == "modification":
+                        dil.update(dil_status_no=1, dil_status="modification")
+                    else:
+                        dil.update(
+                            dil_status_no=dil_status_no,
+                            dil_status=dil_status,
+                            acknowledge_by=request.user.id,
+                            acknowledge_date=datetime.now()
+                        )
+                    DAAuthThreads.objects.create(
+                        dil_id_id=dil_no,
+                        emp_id=request.user.id,
+                        remarks=remarks,
+                        status=dil_status,
+                        created_by_id=request.user.id
                     )
-                DAAuthThreads.objects.create(
-                    dil_id_id=dil_no,
-                    emp_id=request.user.id,
-                    remarks=remarks,
-                    status=dil_status,
-                    created_by_id=request.user.id
-                )
-            else:
-                return Response({'message': 'DA not found', 'status': status.HTTP_204_NO_CONTENT})
-            return Response({'message': 'DA Packing Acknowledged', 'status': status.HTTP_201_CREATED})
+                else:
+                    return Response({'message': 'DA not found', 'status': status.HTTP_204_NO_CONTENT})
+                return Response({'message': 'DA Packing Acknowledged', 'status': status.HTTP_201_CREATED})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

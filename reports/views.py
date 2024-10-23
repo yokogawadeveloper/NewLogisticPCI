@@ -766,7 +766,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
             po_no = dispatch.po_no.split()[0] if dispatch.po_no else 'N/A'
             doc_info = [
                 f"DO No: {dispatch.dil_no}",
-                f"DO Date: {dispatch.dil_date}",
+                f"DO Date: {dispatch.dil_date.strftime('%d-%m-%Y')}",
                 f"SO No: {dispatch.so_no}",
                 f"PO No: {po_no}",
             ]
@@ -784,25 +784,17 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
 
         def shipment_header(canvas, y_position):
             canvas.setFont("Helvetica", 7)
-            # Prepare the ship-to information with line wrapping for the address field
+
+            # Function to wrap text based on width
+            def wrap_text(text, max_chars_per_line):
+                if text:
+                    return textwrap.fill(text, width=max_chars_per_line).split('\n')
+                return []
+
+            # Ship-to details
             ship_to = []
             ship_to.append(dispatch.ship_to_party_name)
-            # ship_to.append(dispatch.ship_to_address)
-            # Custom splitting logic for address into two lines
-            address = dispatch.ship_to_address if dispatch.ship_to_address else ' '
-            if ',' in address:
-                # Find the last comma and split the address into two parts
-                split_index = address.rfind(',')
-                first_part = address[:split_index + 1]  # Include the comma
-                second_part = address[split_index + 1:].strip()  # Trim the second part and remove extra spaces
-                ship_to.append(first_part)
-                ship_to.append(second_part)
-            else:
-                # If no comma, just split at the 40-character mark as a fallback
-                wrapped_address = textwrap.fill(address, width=40)
-                ship_to.extend(wrapped_address.split('\n'))
-
-            # Other info
+            ship_to.extend(wrap_text(dispatch.ship_to_address, 70))  # Wrap at 40 characters (adjust as needed)
             ship_to.append(dispatch.ship_to_city)
             ship_to.append(dispatch.ship_to_postal_code)
             ship_to.append(dispatch.ship_to_country)
@@ -815,33 +807,25 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                 text_object.textLine(line)
             canvas.drawText(text_object)
 
+            # Bill-to details
             bill_to = []
             bill_to.append(dispatch.bill_to_party_name)
-            # bill_to.append(dispatch.bill_to_address)
-            # Custom splitting logic for address into two lines
-            address = dispatch.bill_to_address if dispatch.bill_to_address else ' '
-            if ',' in address:
-                split_index = address.rfind(',')
-                first_part = address[:split_index + 1]
-                second_part = address[split_index + 1:].strip()
-                bill_to.append(first_part)
-                bill_to.append(second_part)
-            else:
-                wrapped_address = textwrap.fill(address, width=40)
-                bill_to.extend(wrapped_address.split('\n'))
-            # other info
-            bill_to.append(dispatch.bill_to_country)
-            bill_to.append(dispatch.bill_to_postal_code)
+            bill_to.extend(wrap_text(dispatch.bill_to_address, 70))  # Wrap at 40 characters (adjust as needed)
             bill_to.append(dispatch.bill_to_city)
+            bill_to.append(dispatch.bill_to_postal_code)
+            bill_to.append(dispatch.bill_to_country)
 
             canvas.setFont("Helvetica-Bold", 9)
             canvas.drawString(4.5 * inch, y_position + 15, "BILL TO")
             canvas.setFont("Helvetica", 7)
-            text_object = canvas.beginText(4.5 * inch, y_position)  # Adjusted x position to 3.5 * inch
+            text_object = canvas.beginText(4.5 * inch, y_position)  # Adjusted x position to 4.5 * inch
             for line in bill_to:
                 text_object.textLine(line)
             canvas.drawText(text_object)
-            canvas.line(inch * 0.5, y_position - 0.8 * inch, width - inch * 0.5, y_position - 0.8 * inch)
+
+            # Draw a line to separate sections
+            canvas.line(inch * 0.5, y_position - (0.8 * inch) - (0.2 * inch), inch * 7.5,
+                        y_position - (0.8 * inch) - (0.2 * inch))
 
         def draw_footer(canvas, page_number, total_pages):
             canvas.setFont("Helvetica", 10)
@@ -1143,7 +1127,7 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
             po_no = dispatch.po_no.split()[0] if dispatch.po_no else 'N/A'
             doc_info = [
                 f"DO No: {dispatch.dil_no}",
-                f"DO Date: {dispatch.dil_date}",
+                f"DO Date: {dispatch.dil_date.strftime('%d-%m-%Y')}",
                 f"SO No: {dispatch.so_no}",
                 f"PO No: {po_no}",
             ]
@@ -1162,24 +1146,16 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
         def shipment_header(canvas, y_position):
             canvas.setFont("Helvetica", 7)
 
+            # Function to wrap text based on width
+            def wrap_text(text, max_chars_per_line):
+                if text:
+                    return textwrap.fill(text, width=max_chars_per_line).split('\n')
+                return []
+
+            # Ship-to details
             ship_to = []
             ship_to.append(dispatch.ship_to_party_name)
-            # ship_to.append(dispatch.ship_to_address)
-            # Check if ship_to_address is not None before processing it
-            address = dispatch.ship_to_address if dispatch.ship_to_address else ' '
-            if ',' in address:
-                # Find the last comma and split the address into two parts
-                split_index = address.rfind(',')
-                first_part = address[:split_index + 1]
-                second_part = address[split_index + 1:].strip()
-                ship_to.append(first_part)
-                ship_to.append(second_part)
-            else:
-                # If no comma, just split at the 40-character mark as a fallback
-                wrapped_address = textwrap.fill(address, width=40)
-                ship_to.extend(wrapped_address.split('\n'))
-
-            # Add the remaining ship-to details
+            ship_to.extend(wrap_text(dispatch.ship_to_address, 70))  # Wrap at 40 characters (adjust as needed)
             ship_to.append(dispatch.ship_to_city)
             ship_to.append(dispatch.ship_to_postal_code)
             ship_to.append(dispatch.ship_to_country)
@@ -1192,35 +1168,25 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                 text_object.textLine(line)
             canvas.drawText(text_object)
 
+            # Bill-to details
             bill_to = []
             bill_to.append(dispatch.bill_to_party_name)
-            # bill_to.append(dispatch.bill_to_address)
-            address = dispatch.bill_to_address if dispatch.bill_to_address else ' '
-            if ',' in address:
-                # Find the last comma and split the address into two parts
-                split_index = address.rfind(',')
-                first_part = address[:split_index + 1]
-                second_part = address[split_index + 1:].strip()
-                bill_to.append(first_part)
-                bill_to.append(second_part)
-            else:
-                # If no comma, just split at the 40-character mark as a fallback
-                wrapped_address = textwrap.fill(address, width=40)
-                bill_to.extend(wrapped_address.split('\n'))
-
-            # Add the remaining ship-to details
-            bill_to.append(dispatch.bill_to_country)
-            bill_to.append(dispatch.bill_to_postal_code)
+            bill_to.extend(wrap_text(dispatch.bill_to_address, 70))  # Wrap at 40 characters (adjust as needed)
             bill_to.append(dispatch.bill_to_city)
+            bill_to.append(dispatch.bill_to_postal_code)
+            bill_to.append(dispatch.bill_to_country)
 
             canvas.setFont("Helvetica-Bold", 9)
             canvas.drawString(4.5 * inch, y_position + 15, "BILL TO")
             canvas.setFont("Helvetica", 7)
-            text_object = canvas.beginText(4.5 * inch, y_position)  # Adjusted x position to 3.5 * inch
+            text_object = canvas.beginText(4.5 * inch, y_position)  # Adjusted x position to 4.5 * inch
             for line in bill_to:
                 text_object.textLine(line)
             canvas.drawText(text_object)
-            canvas.line(inch * 0.5, y_position - 0.8 * inch, width - inch * 0.5, y_position - 0.8 * inch)
+
+            # Draw a line to separate sections
+            canvas.line(inch * 0.5, y_position - (0.8 * inch) - (0.2 * inch), inch * 7.5,
+                        y_position - (0.8 * inch) - (0.2 * inch))
 
         def draw_footer(canvas, page_number, total_pages):
             canvas.setFont("Helvetica", 10)
@@ -1451,9 +1417,16 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
         def shipment_header(canvas, y_position):
             canvas.setFont("Helvetica", 7)
 
+            # Function to wrap text based on width
+            def wrap_text(text, max_chars_per_line):
+                if text:
+                    return textwrap.fill(text, width=max_chars_per_line).split('\n')
+                return []
+
+            # Ship-to details
             ship_to = []
             ship_to.append(dispatch.ship_to_party_name)
-            ship_to.append(dispatch.ship_to_address)
+            ship_to.extend(wrap_text(dispatch.ship_to_address, 70))  # Wrap at 40 characters (adjust as needed)
             ship_to.append(dispatch.ship_to_city)
             ship_to.append(dispatch.ship_to_postal_code)
             ship_to.append(dispatch.ship_to_country)
@@ -1466,33 +1439,25 @@ class PackingListPDFViewSet(viewsets.ModelViewSet):
                 text_object.textLine(line)
             canvas.drawText(text_object)
 
-            # Concatenate for string
-            insurance_names = dispatch.insurance_scope.insurance_scope_name if dispatch.insurance_scope else "N/A"
-            freight_names = dispatch.freight_basis.freight_basis_name if dispatch.freight_basis else "N/A"
-
-            warranty = f"Warranty: {dispatch.warranty}"
-            ld = f"LD: {dispatch.ld}"
-            manual = f"MANUALS/TCS/GC: {dispatch.manual_tcs_gc}"
-            insurance_name = "Insurance Scope: " + insurance_names
-            freight_name = "Freight Basis: " + freight_names
-
+            # Bill-to details
             bill_to = []
-            bill_to.append(warranty)
-            bill_to.append(ld)
-            bill_to.append(manual)
-            bill_to.append(insurance_name)
-            bill_to.append(freight_name)
+            bill_to.append(dispatch.bill_to_party_name)
+            bill_to.extend(wrap_text(dispatch.bill_to_address, 70))  # Wrap at 40 characters (adjust as needed)
+            bill_to.append(dispatch.bill_to_city)
+            bill_to.append(dispatch.bill_to_postal_code)
+            bill_to.append(dispatch.bill_to_country)
 
-            canvas.setFont("Helvetica-Bold", 4)
-            canvas.drawString(4.5 * inch, y_position + 15, "NOTE")
+            canvas.setFont("Helvetica-Bold", 9)
+            canvas.drawString(4.5 * inch, y_position + 15, "BILL TO")
             canvas.setFont("Helvetica", 7)
-            text_object = canvas.beginText(4.5 * inch, y_position)  # Adjusted x position to 3.5 * inch
-            canvas.setFont("Helvetica-Bold", 8)
+            text_object = canvas.beginText(4.5 * inch, y_position)  # Adjusted x position to 4.5 * inch
             for line in bill_to:
                 text_object.textLine(line)
             canvas.drawText(text_object)
-            canvas.setFont("Helvetica", 7)
-            canvas.line(inch * 0.5, y_position - 0.8 * inch, width - inch * 0.5, y_position - 0.8 * inch)
+
+            # Draw a line to separate sections
+            canvas.line(inch * 0.5, y_position - (0.8 * inch) - (0.2 * inch), inch * 7.5,
+                        y_position - (0.8 * inch) - (0.2 * inch))
 
         def draw_wrapped_string(canvas, x, y, text, max_width):
             if text is None:
